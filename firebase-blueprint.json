@@ -1,0 +1,170 @@
+{
+  "entities": {
+    "CostItem": {
+      "title": "CostItem",
+      "description": "An ingredient or packaging cost item with unit pricing and price history snapshots",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique identifier of the cost item" },
+        "productId": { "type": "string", "description": "Associated product ID (e.g. normal-30cl)" },
+        "name": { "type": "string", "maxLength": 100, "description": "Ingredient or cost item name" },
+        "unitPricePerBottle": { "type": "number", "description": "Direct cost per single bottle" },
+        "notes": { "type": "string", "maxLength": 500, "description": "Optional notes or calculation details" },
+        "lastUpdated": { "type": "string", "description": "ISO timestamp of last update" },
+        "priceHistory": {
+          "type": "array",
+          "description": "Chronological log of price revisions"
+        }
+      },
+      "required": ["id", "productId", "name", "unitPricePerBottle"]
+    },
+    "YoghurtProduct": {
+      "title": "YoghurtProduct",
+      "description": "Yoghurt product specifications, bottle sizes, and selling prices",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique identifier of product (e.g. normal-30cl)" },
+        "name": { "type": "string", "maxLength": 100, "description": "Full product name" },
+        "size": { "type": "string", "maxLength": 30, "description": "Bottle size specification" },
+        "productType": { "type": "string", "description": "Type of yoghurt formulation" },
+        "category": { "type": "string", "description": "Product category ('yoghurt' or 'pastries')" },
+        "description": { "type": "string", "maxLength": 500, "description": "Optional product description" },
+        "sellingPrice": { "type": "number", "description": "Current selling price per bottle" }
+      },
+      "required": ["id", "name", "size", "productType", "sellingPrice"]
+    },
+    "OrderRecord": {
+      "title": "OrderRecord",
+      "description": "Customer order with immutable snapshots of selling prices and production costs",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique order ID" },
+        "referenceNumber": { "type": "string", "maxLength": 50, "description": "Formatted invoice reference" },
+        "date": { "type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}$", "description": "YYYY-MM-DD order date" },
+        "customerName": { "type": "string", "maxLength": 120, "description": "Customer or outlet name" },
+        "customerPhone": { "type": "string", "maxLength": 30, "description": "Customer contact phone" },
+        "items": {
+          "type": "array",
+          "description": "Ordered line items with locked unitPrice and unitCost snapshots"
+        },
+        "notes": { "type": "string", "maxLength": 500, "description": "Order special instructions or dispatch notes" },
+        "createdAt": { "type": "string", "description": "Creation timestamp" }
+      },
+      "required": ["id", "referenceNumber", "date", "items"]
+    },
+    "InventoryStockRecord": {
+      "title": "InventoryStockRecord",
+      "description": "Finished goods on-hand bottle quantities per product",
+      "type": "object",
+      "properties": {
+        "productId": { "type": "string", "description": "Product ID" },
+        "productName": { "type": "string", "description": "Product Name" },
+        "productType": { "type": "string", "description": "Product Type" },
+        "size": { "type": "string", "description": "Bottle Size" },
+        "currentStock": { "type": "number", "description": "Current on-hand bottle quantity" },
+        "lastUpdated": { "type": "string", "description": "ISO timestamp of last adjustment" }
+      },
+      "required": ["productId", "currentStock"]
+    },
+    "StockLogEntry": {
+      "title": "StockLogEntry",
+      "description": "Audit trail of inventory adjustments, batch additions, and order deductions",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique log entry ID" },
+        "date": { "type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}$", "description": "YYYY-MM-DD log date" },
+        "productId": { "type": "string", "description": "Product ID adjusted" },
+        "changeType": { "type": "string", "description": "Type of inventory change" },
+        "quantityChange": { "type": "number", "description": "Signed quantity change" },
+        "notes": { "type": "string", "maxLength": 200, "description": "Reason or batch notes" },
+        "createdAt": { "type": "string", "description": "ISO timestamp of event" }
+      },
+      "required": ["id", "date", "productId", "quantityChange"]
+    },
+    "MiscellaneousExpense": {
+      "title": "MiscellaneousExpense",
+      "description": "Operational and non-production business overhead expenses",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique expense record ID" },
+        "date": { "type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}$", "description": "YYYY-MM-DD expense date" },
+        "description": { "type": "string", "maxLength": 200, "description": "Expense item description" },
+        "amount": { "type": "number", "description": "Monetary cost amount" },
+        "notes": { "type": "string", "maxLength": 500, "description": "Optional notes or vendor info" },
+        "createdAt": { "type": "string", "description": "Creation timestamp" }
+      },
+      "required": ["id", "date", "description", "amount"]
+    },
+    "BusinessSettings": {
+      "title": "BusinessSettings",
+      "description": "Global business configuration including currency and business name",
+      "type": "object",
+      "properties": {
+        "businessName": { "type": "string", "maxLength": 100, "description": "Business entity name" },
+        "currencyCode": { "type": "string", "maxLength": 10, "description": "ISO currency code (NGN, USD, GBP, EUR)" },
+        "currencySymbol": { "type": "string", "maxLength": 10, "description": "Currency symbol character" },
+        "currencyName": { "type": "string", "maxLength": 50, "description": "Currency full name" },
+        "updatedAt": { "type": "string", "description": "ISO timestamp of last setting change" }
+      },
+      "required": ["businessName", "currencyCode", "currencySymbol"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}/cost_items/{itemId}": {
+      "schema": { "$ref": "#/entities/CostItem" },
+      "description": "User-isolated collection of ingredient and packaging cost items"
+    },
+    "/users/{userId}/products/{productId}": {
+      "schema": { "$ref": "#/entities/YoghurtProduct" },
+      "description": "User-isolated collection of yoghurt product specifications and prices"
+    },
+    "/users/{userId}/orders/{orderId}": {
+      "schema": { "$ref": "#/entities/OrderRecord" },
+      "description": "User-isolated collection of customer order records and invoices"
+    },
+    "/users/{userId}/inventory/{productId}": {
+      "schema": { "$ref": "#/entities/InventoryStockRecord" },
+      "description": "User-isolated collection of on-hand inventory balances by product"
+    },
+    "/users/{userId}/stock_logs/{logId}": {
+      "schema": { "$ref": "#/entities/StockLogEntry" },
+      "description": "User-isolated collection of inventory adjustment audit log entries"
+    },
+    "/users/{userId}/miscellaneous_expenses/{expenseId}": {
+      "schema": { "$ref": "#/entities/MiscellaneousExpense" },
+      "description": "User-isolated collection of operational overhead and miscellaneous business expenses"
+    },
+    "/users/{userId}/settings/config": {
+      "schema": { "$ref": "#/entities/BusinessSettings" },
+      "description": "User-isolated business settings document"
+    },
+    "/cost_items/{itemId}": {
+      "schema": { "$ref": "#/entities/CostItem" },
+      "description": "Collection of ingredient and packaging cost items"
+    },
+    "/products/{productId}": {
+      "schema": { "$ref": "#/entities/YoghurtProduct" },
+      "description": "Collection of yoghurt product specifications and prices"
+    },
+    "/orders/{orderId}": {
+      "schema": { "$ref": "#/entities/OrderRecord" },
+      "description": "Collection of customer order records and invoices"
+    },
+    "/inventory/{productId}": {
+      "schema": { "$ref": "#/entities/InventoryStockRecord" },
+      "description": "Collection of on-hand inventory balances by product"
+    },
+    "/stock_logs/{logId}": {
+      "schema": { "$ref": "#/entities/StockLogEntry" },
+      "description": "Collection of inventory adjustment audit log entries"
+    },
+    "/miscellaneous_expenses/{expenseId}": {
+      "schema": { "$ref": "#/entities/MiscellaneousExpense" },
+      "description": "Collection of operational overhead and miscellaneous business expenses"
+    },
+    "/settings/config": {
+      "schema": { "$ref": "#/entities/BusinessSettings" },
+      "description": "Singleton configuration document for business settings"
+    }
+  }
+}

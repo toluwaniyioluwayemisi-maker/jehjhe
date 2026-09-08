@@ -1,0 +1,6 @@
+{
+  "name": "Butch Master - Cost & Ingredients Manager",
+  "description": "Mobile-first business management application for Butch Master yoghurt and pastries business: Cost & Ingredients, Orders & Invoices, Daily Sales Tracker, Inventory, and Cumulative records.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
