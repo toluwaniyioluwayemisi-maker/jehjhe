@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { YoghurtProduct, CostItem, CurrencyConfig } from '../types';
 import { formatCurrency, calculateProductCost } from '../utils/storage';
-import { ArrowRight, Sparkles, Milk, ChevronRight, Layers, Tag, TrendingUp } from 'lucide-react';
+import { ArrowRight, Sparkles, Milk, ChevronRight, Layers, Tag, TrendingUp, Zap } from 'lucide-react';
 
 interface ProductComparisonViewProps {
   products: YoghurtProduct[];
@@ -71,6 +71,8 @@ export const ProductComparisonView: React.FC<ProductComparisonViewProps> = ({
             const unitProfit = sellingPrice - totalCost;
             const marginPercent = hasSellingPrice ? (unitProfit / sellingPrice) * 100 : 0;
             const isGreek = prod.productType.toLowerCase().includes('greek');
+            const isElectricity = (prod.category || 'yoghurt') === 'electricity';
+            const isPastries = (prod.category || 'yoghurt') === 'pastries';
             const isExpanded = expandedProductId === prod.id;
 
             return (
@@ -83,8 +85,16 @@ export const ProductComparisonView: React.FC<ProductComparisonViewProps> = ({
                 {/* Header */}
                 <div className="flex items-start justify-between gap-2 mb-2">
                   <div className="flex items-center gap-2">
-                    {isGreek ? (
+                    {isElectricity ? (
+                      <div className="w-8 h-8 rounded-lg bg-amber-100 text-amber-700 flex items-center justify-center font-bold text-xs">
+                        <Zap className="w-4 h-4 fill-amber-700" />
+                      </div>
+                    ) : isGreek ? (
                       <div className="w-8 h-8 rounded-lg bg-[#EEF4EF] text-[#45634D] flex items-center justify-center font-bold text-xs">
+                        <Sparkles className="w-4 h-4" />
+                      </div>
+                    ) : isPastries ? (
+                      <div className="w-8 h-8 rounded-lg bg-orange-50 text-orange-700 flex items-center justify-center font-bold text-xs">
                         <Sparkles className="w-4 h-4" />
                       </div>
                     ) : (
@@ -94,11 +104,22 @@ export const ProductComparisonView: React.FC<ProductComparisonViewProps> = ({
                     )}
                     <div>
                       <h4 className="text-sm font-bold text-[#1C241E] leading-tight font-display">
-                        {prod.productType}
+                        {prod.name || prod.productType}
                       </h4>
-                      <span className="text-xs font-semibold text-[#637368]">
-                        {prod.size}
-                      </span>
+                      <div className="flex items-center gap-1.5 mt-0.5">
+                        <span className="text-xs font-semibold text-[#637368]">
+                          {prod.size}
+                        </span>
+                        <span className={`text-[10px] px-1.5 py-0.2 rounded font-bold uppercase ${
+                          isElectricity
+                            ? 'bg-amber-100 text-amber-900 border border-amber-300'
+                            : isPastries
+                            ? 'bg-orange-100 text-orange-900'
+                            : 'bg-[#EAEFEA] text-[#2F4535]'
+                        }`}>
+                          {isElectricity ? '⚡ Electricity' : isPastries ? 'Pastries' : 'Yoghurt'}
+                        </span>
+                      </div>
                     </div>
                   </div>
 

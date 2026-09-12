@@ -30,6 +30,7 @@ import {
   Milk,
   RotateCcw,
   Check,
+  Zap,
 } from 'lucide-react';
 
 interface DemoModeSectionProps {
@@ -105,10 +106,30 @@ export const DemoModeSection: React.FC<DemoModeSectionProps> = ({
       phone: '+234 901 228 3491',
       activeJobs: 'Cold-chain dispatch for Greenfield Mart invoice #BM-1008',
     },
+    {
+      id: 'w-5',
+      name: 'Babatunde Alao',
+      role: 'Master Electrician & Power Tech',
+      status: 'Active',
+      shiftsThisWeek: 4,
+      ratePerBatch: '₦5,500',
+      phone: '+234 802 774 2201',
+      activeJobs: 'Facility 3-Phase Panel Diagnostic & Equipment Wiring',
+    },
   ];
 
   // Derived Customers List from demo orders
   const sampleCustomers = [
+    {
+      name: 'Apex Industrial Estate',
+      contact: 'Engr. Dapo Williams',
+      phone: '+234 809 123 4567',
+      location: 'Ikeja Industrial Zone, Lagos',
+      totalOrders: 1,
+      totalSpend: 18000,
+      outstandingBalance: 0,
+      status: 'Paid',
+    },
     {
       name: 'Greenfield Mart',
       contact: 'Mr. Kunle Adeyemi',
@@ -461,9 +482,26 @@ export const DemoModeSection: React.FC<DemoModeSectionProps> = ({
                   >
                     <div>
                       <div className="flex items-center justify-between mb-1">
-                        <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-[#1E2621] text-white">
-                          {prod.size}
-                        </span>
+                        <div className="flex items-center gap-1.5">
+                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${
+                            prod.category === 'electricity'
+                              ? 'bg-amber-500 text-amber-950 font-black'
+                              : prod.category === 'pastries'
+                              ? 'bg-orange-600 text-white'
+                              : 'bg-[#1E2621] text-white'
+                          }`}>
+                            {prod.size}
+                          </span>
+                          <span className={`text-[10px] font-bold px-1.5 py-0.2 rounded ${
+                            prod.category === 'electricity'
+                              ? 'bg-amber-100 text-amber-900 border border-amber-300'
+                              : prod.category === 'pastries'
+                              ? 'bg-orange-100 text-orange-900'
+                              : 'bg-[#E8EFEA] text-[#2F4535]'
+                          }`}>
+                            {prod.category === 'electricity' ? '⚡ Electricity' : prod.category === 'pastries' ? '🥐 Pastries' : '🥛 Yoghurt'}
+                          </span>
+                        </div>
                         <span className="text-[11px] font-bold text-[#45634D]">
                           {margin.toFixed(1)}% margin
                         </span>
@@ -575,10 +613,10 @@ export const DemoModeSection: React.FC<DemoModeSectionProps> = ({
         <div className="space-y-4">
           <div className="bg-white rounded-2xl p-4 sm:p-5 border border-[#DDD6CA] shadow-2xs">
             <h3 className="text-base font-bold text-[#1C211E] font-display mb-1">
-              Sample Yoghurt Recipe Costing
+              Sample Products & Services Costing
             </h3>
             <p className="text-xs text-[#697A6F] mb-4">
-              Breakdown of Milk, Starter Culture, Sugar, Packaging, and Energy per bottle.
+              Breakdown of raw materials, electrical consumables, labour, packaging, and energy per unit.
             </p>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -593,10 +631,23 @@ export const DemoModeSection: React.FC<DemoModeSectionProps> = ({
                     className="p-4 rounded-xl border border-[#DDD6CA] bg-[#FAF8F5] flex flex-col justify-between space-y-3"
                   >
                     <div>
-                      <div className="flex items-center justify-between mb-1.5">
-                        <span className="text-xs font-bold px-2 py-0.5 rounded bg-[#2D4534] text-white">
-                          {prod.size}
-                        </span>
+                      <div className="flex items-center justify-between mb-1.5 flex-wrap gap-1">
+                        <div className="flex items-center gap-1.5">
+                          <span className={`text-xs font-bold px-2 py-0.5 rounded ${
+                            prod.category === 'electricity'
+                              ? 'bg-amber-500 text-amber-950 font-black'
+                              : 'bg-[#2D4534] text-white'
+                          }`}>
+                            {prod.size}
+                          </span>
+                          <span className={`text-[10px] font-bold px-1.5 py-0.2 rounded border ${
+                            prod.category === 'electricity'
+                              ? 'bg-amber-100 text-amber-900 border-amber-300'
+                              : 'bg-[#E8EFEA] text-[#2F4535] border-[#C5D9CA]'
+                          }`}>
+                            {prod.category === 'electricity' ? '⚡ Electricity' : prod.category === 'pastries' ? '🥐 Pastries' : '🥛 Yoghurt'}
+                          </span>
+                        </div>
                         <span className="text-xs font-bold text-[#1C211E]">
                           {formatCurrency(selling, currency.symbol)} retail
                         </span>

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Milk, RefreshCw, Download, Upload, Check, ChevronDown, Database, Cloud, CloudOff, Tag, LogOut, User as UserIcon } from 'lucide-react';
+import { Milk, RefreshCw, Download, Upload, Check, ChevronDown, Database, Cloud, CloudOff, Tag, LogOut, LogIn, User as UserIcon } from 'lucide-react';
 import {
   CurrencyConfig,
   YoghurtProduct,
@@ -30,6 +30,7 @@ interface HeaderProps {
     uid?: string;
   } | null;
   onSignOut?: () => void;
+  onOpenSignIn?: () => void;
   onImportData: (data: {
     products: YoghurtProduct[];
     costItems: CostItem[];
@@ -53,6 +54,7 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenSellingPrices,
   currentUser,
   onSignOut,
+  onOpenSignIn,
   onImportData,
 }) => {
   const [showSettings, setShowSettings] = useState(false);
@@ -229,6 +231,19 @@ export const Header: React.FC<HeaderProps> = ({
                   </button>
                 )}
               </div>
+            )}
+
+            {/* Unauthenticated / Demo Mode Sign In Shortcut */}
+            {!currentUser && onOpenSignIn && (
+              <button
+                id="header-signin-shortcut-btn"
+                onClick={onOpenSignIn}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#45634D] hover:bg-[#38523F] text-white text-xs font-bold border border-[#52775C] transition-colors cursor-pointer shadow-xs"
+                title="Sign in to your account"
+              >
+                <LogIn className="w-3.5 h-3.5" />
+                <span>Sign In</span>
+              </button>
             )}
           </div>
         </div>

@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
-import { YoghurtProduct, CurrencyConfig } from '../types';
+import React, { useState, useEffect } from 'react';
+import { YoghurtProduct, CurrencyConfig, ServiceCategory, SERVICE_CATEGORIES } from '../types';
 import { INITIAL_PRODUCTS } from '../data/initialData';
-import { X, Plus, Sparkles, Package, DollarSign, Tag, CheckCircle2 } from 'lucide-react';
+import { X, Plus, Sparkles, Package, DollarSign, Tag, CheckCircle2, Zap, Save } from 'lucide-react';
 
 interface AddProductModalProps {
   isOpen: boolean;
@@ -10,6 +10,7 @@ interface AddProductModalProps {
   onQuickLoadStandardProducts?: (products: YoghurtProduct[]) => void;
   currency: CurrencyConfig;
   existingProductIds?: string[];
+  editingProduct?: YoghurtProduct | null;
 }
 
 export const AddProductModal: React.FC<AddProductModalProps> = ({
@@ -19,14 +20,40 @@ export const AddProductModal: React.FC<AddProductModalProps> = ({
   onQuickLoadStandardProducts,
   currency,
   existingProductIds = [],
+  editingProduct = null,
 }) => {
   const [productType, setProductType] = useState('Normal Yoghurt');
   const [size, setSize] = useState('');
   const [customName, setCustomName] = useState('');
-  const [category, setCategory] = useState<'yoghurt' | 'pastries'>('yoghurt');
+  const [category, setCategory] = useState<ServiceCategory>('yoghurt');
   const [sellingPrice, setSellingPrice] = useState<string>('');
   const [description, setDescription] = useState('');
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (isOpen) {
+      if (editingProduct) {
+        setProductType(editingProduct.productType || 'Normal Yoghurt');
+        setSize(editingProduct.size || '');
+        setCustomName(editingProduct.name || '');
+        setCategory(editingProduct.category || 'yoghurt');
+        setSellingPrice(
+          typeof editingProduct.sellingPrice === 'number' && editingProduct.sellingPrice > 0
+            ? String(editingProduct.sellingPrice)
+            : ''
+        );
+        setDescription(editingProduct.description || '');
+      } else {
+        setProductType('Normal Yoghurt');
+        setSize('');
+        setCustomName('');
+        setCategory('yoghurt');
+        setSellingPrice('');
+        setDescription('');
+      }
+      setError(null);
+    }
+  }, [isOpen, editingProduct]);
 
   if (!isOpen) return null;
 
@@ -37,7 +64,7 @@ export const AddProductModal: React.FC<AddProductModalProps> = ({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!size.trim()) {
-      setError('Please provide a size or packaging format (e.g. 30cl, 50cl, 500ml, 1 Liter).');
+      setError('Please provide a size, unit or billing format (e.g. 30cl, 50cl, Per Month, Job Service).');
       return;
     }
 
@@ -47,10 +74,12 @@ export const AddProductModal: React.FC<AddProductModalProps> = ({
       return;
     }
 
-    const generatedId = `${productType.toLowerCase().replace(/[^a-z0-9]/g, '-')}-${size.toLowerCase().replace(/[^a-z0-9]/g, '-')}-${Date.now().toString().slice(-4)}`;
+    const productId = editingProduct
+      ? editingProduct.id
+      : `${category === 'electricity' ? 'elec' : productType.toLowerCase().replace(/[^a-z0-9]/g, '-')}-${size.toLowerCase().replace(/[^a-z0-9]/g, '-')}-${Date.now().toString().slice(-4)}`;
 
-    const newProduct: YoghurtProduct = {
-      id: generatedId,
+    const productPayload: YoghurtProduct = {
+      id: productId,
       productType: productType.trim(),
       size: size.trim(),
       name: resolvedName,
@@ -59,7 +88,7 @@ export const AddProductModal: React.FC<AddProductModalProps> = ({
       description: description.trim() || undefined,
     };
 
-    onSaveProduct(newProduct);
+    onSaveProduct(productPayload);
     onClose();
   };
 
@@ -68,6 +97,30 @@ export const AddProductModal: React.FC<AddProductModalProps> = ({
       onQuickLoadStandardProducts(INITIAL_PRODUCTS);
       onClose();
     }
+  };
+
+  const handleApplyElectricityPreset = (presetType: 'monthly' | 'maintenance' | 'wiring') => {
+    setCategory('electricity');
+    if (presetType === 'monthly') {
+      setProductType('Industrial Electricity & Cold-Chain Power');
+      setSize('Monthly Run / Billing');
+      setCustomName('Industrial 3-Phase Electricity & Cold-Chain Power');
+      setSellingPrice('45000');
+      setDescription('Dedicated 3-phase grid power supply, backup diesel synchronization, and cold-chain chilling line feed');
+    } else if (presetType === 'maintenance') {
+      setProductType('Electrical Maintenance & Generator Service');
+      setSize('Per Service Job');
+      setCustomName('Electrical Maintenance & Generator Phasing');
+      setSellingPrice('18500');
+      setDescription('Certified electrical check, surge suppressor inspection, and distribution board calibration');
+    } else {
+      setProductType('Cold Room Electrical Installation');
+      setSize('Per Project');
+      setCustomName('Cold Storage Wiring & Electrical Inspection');
+      setSellingPrice('35000');
+      setDescription('Heavy-duty cabling, isolation switchgear, and safety breaker testing for dairy facilities');
+    }
+    setError(null);
   };
 
   return (
@@ -85,15 +138,21 @@ export const AddProductModal: React.FC<AddProductModalProps> = ({
         {/* Modal Header */}
         <div className="flex items-start justify-between gap-3 pb-3 border-b border-[#EAE4D8]">
           <div className="flex items-center gap-2.5">
-            <div className="w-10 h-10 rounded-xl bg-[#EEF4EF] text-[#34513B] flex items-center justify-center">
-              <Package className="w-5 h-5" />
+            <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
+              category === 'electricity'
+                ? 'bg-amber-100 text-amber-800'
+                : 'bg-[#EEF4EF] text-[#34513B]'
+            }`}>
+              {category === 'electricity' ? <Zap className="w-5 h-5" /> : <Package className="w-5 h-5" />}
             </div>
             <div>
               <h3 className="text-base sm:text-lg font-bold text-[#1C211E] font-display">
-                Add New Product / Bottle Size
+                {editingProduct ? 'Edit Service / Product' : 'Add New Service / Product'}
               </h3>
               <p className="text-xs text-[#697A6F]">
-                Configure yoghurt product sizes to track recipe ingredient costs and selling margins.
+                {editingProduct
+                  ? 'Update category, pricing and configuration for this service or product.'
+                  : 'Configure services and product lines (Yoghurt, Pastries, or Electricity) to track costs and profits.'}
               </p>
             </div>
           </div>
@@ -107,8 +166,46 @@ export const AddProductModal: React.FC<AddProductModalProps> = ({
           </button>
         </div>
 
+        {/* Electricity Quick Presets (Available when creating or selecting Electricity) */}
+        {!editingProduct && (
+          <div className="p-3 bg-amber-50/70 border border-amber-200/80 rounded-xl space-y-2">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-1.5 text-xs font-bold text-amber-900">
+                <Zap className="w-3.5 h-3.5 text-amber-600 fill-amber-600" />
+                <span>Quick Preset: Electricity Category Services</span>
+              </div>
+              <span className="text-[10px] font-semibold text-amber-700 bg-amber-100 px-2 py-0.5 rounded-full">
+                1-Click Load
+              </span>
+            </div>
+            <div className="flex flex-wrap gap-1.5">
+              <button
+                type="button"
+                onClick={() => handleApplyElectricityPreset('monthly')}
+                className="text-[11px] font-medium px-2.5 py-1 bg-white hover:bg-amber-100 text-amber-900 rounded-lg border border-amber-300 transition cursor-pointer"
+              >
+                ⚡ 3-Phase Industrial Power
+              </button>
+              <button
+                type="button"
+                onClick={() => handleApplyElectricityPreset('maintenance')}
+                className="text-[11px] font-medium px-2.5 py-1 bg-white hover:bg-amber-100 text-amber-900 rounded-lg border border-amber-300 transition cursor-pointer"
+              >
+                ⚡ Generator & Phasing Service
+              </button>
+              <button
+                type="button"
+                onClick={() => handleApplyElectricityPreset('wiring')}
+                className="text-[11px] font-medium px-2.5 py-1 bg-white hover:bg-amber-100 text-amber-900 rounded-lg border border-amber-300 transition cursor-pointer"
+              >
+                ⚡ Cold Storage Wiring
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Quick Setup Option if standard products not loaded */}
-        {existingProductIds.length === 0 && onQuickLoadStandardProducts && (
+        {!editingProduct && existingProductIds.length === 0 && onQuickLoadStandardProducts && (
           <div className="p-3.5 bg-[#FAF6F0] rounded-xl border border-[#E6DAC8] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
               <div className="flex items-center gap-1.5 text-xs font-bold text-[#8C4E20]">
@@ -137,11 +234,34 @@ export const AddProductModal: React.FC<AddProductModalProps> = ({
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4 text-xs">
-          {/* Product Type & Category */}
+          {/* Category & Product Type */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="block text-[#47574B] font-bold uppercase tracking-wider text-[10px] mb-1">
-                Product Type
+                Service / Product Category *
+              </label>
+              <select
+                id="input-product-category"
+                value={category}
+                onChange={(e) => {
+                  const newCat = e.target.value as ServiceCategory;
+                  setCategory(newCat);
+                  if (newCat === 'electricity' && (!productType || productType === 'Normal Yoghurt')) {
+                    setProductType('Industrial Electricity & Cold-Chain Power');
+                    if (!size) setSize('Monthly Run / Billing');
+                  }
+                }}
+                className="w-full px-3 py-2 rounded-xl border border-[#D9D3C7] bg-white text-[#1C211E] font-medium focus:ring-2 focus:ring-[#45634D] focus:outline-hidden"
+              >
+                <option value="yoghurt">🥛 Yoghurt Line</option>
+                <option value="pastries">🥐 Pastries / Bakery Line</option>
+                <option value="electricity">⚡ Electricity / Electrical Services</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-[#47574B] font-bold uppercase tracking-wider text-[10px] mb-1">
+                Product / Service Type
               </label>
               <select
                 id="input-product-type"
@@ -149,22 +269,37 @@ export const AddProductModal: React.FC<AddProductModalProps> = ({
                 onChange={(e) => setProductType(e.target.value)}
                 className="w-full px-3 py-2 rounded-xl border border-[#D9D3C7] bg-white text-[#1C211E] font-medium focus:ring-2 focus:ring-[#45634D] focus:outline-hidden"
               >
-                <option value="Normal Yoghurt">Normal Yoghurt</option>
-                <option value="Greek Yoghurt">Greek Yoghurt</option>
-                <option value="Flavoured Yoghurt">Flavoured Yoghurt</option>
-                <option value="Pastries">Pastries / Snacks</option>
-                <option value="Beverage">Other Beverage</option>
+                {category === 'electricity' ? (
+                  <>
+                    <option value="Industrial Electricity & Cold-Chain Power">Industrial Electricity & Cold-Chain Power</option>
+                    <option value="Electrical Maintenance & Generator Service">Electrical Maintenance & Generator Service</option>
+                    <option value="Cold Room Electrical Installation">Cold Room Electrical Installation</option>
+                    <option value="Solar & Inverter Backup System">Solar & Inverter Backup System</option>
+                    <option value="General Electrical Utility">General Electrical Utility</option>
+                  </>
+                ) : (
+                  <>
+                    <option value="Normal Yoghurt">Normal Yoghurt</option>
+                    <option value="Greek Yoghurt">Greek Yoghurt</option>
+                    <option value="Flavoured Yoghurt">Flavoured Yoghurt</option>
+                    <option value="Pastries">Pastries / Snacks</option>
+                    <option value="Beverage">Other Beverage</option>
+                  </>
+                )}
               </select>
             </div>
+          </div>
 
+          {/* Size / Billing Unit & Selling Price */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="block text-[#47574B] font-bold uppercase tracking-wider text-[10px] mb-1">
-                Size / Packaging Format *
+                {category === 'electricity' ? 'Billing Unit / Service Format *' : 'Size / Packaging Format *'}
               </label>
               <input
                 id="input-product-size"
                 type="text"
-                placeholder="e.g. 30cl, 50cl, 500ml, 1 Liter"
+                placeholder={category === 'electricity' ? 'e.g. Monthly Run, Per Job, 3-Phase Unit' : 'e.g. 30cl, 50cl, 500ml, 1 Liter'}
                 value={size}
                 onChange={(e) => {
                   setSize(e.target.value);
@@ -174,29 +309,7 @@ export const AddProductModal: React.FC<AddProductModalProps> = ({
                 required
               />
             </div>
-          </div>
 
-          {/* Product Name Display / Override */}
-          <div>
-            <label className="block text-[#47574B] font-bold uppercase tracking-wider text-[10px] mb-1">
-              Display Name (Optional Customization)
-            </label>
-            <input
-              id="input-product-display-name"
-              type="text"
-              placeholder={resolvedName}
-              value={customName}
-              onChange={(e) => setCustomName(e.target.value)}
-              className="w-full px-3 py-2 rounded-xl border border-[#D9D3C7] bg-white text-[#1C211E] font-medium focus:ring-2 focus:ring-[#45634D] focus:outline-hidden"
-            />
-            <p className="text-[11px] text-[#697A6F] mt-1">
-              Will display in invoices and reports as:{' '}
-              <span className="font-bold text-[#1C211E]">{resolvedName}</span>
-            </p>
-          </div>
-
-          {/* Selling Price & Category */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="block text-[#47574B] font-bold uppercase tracking-wider text-[10px] mb-1">
                 Selling Price ({currency.symbol})
@@ -217,21 +330,25 @@ export const AddProductModal: React.FC<AddProductModalProps> = ({
                 />
               </div>
             </div>
+          </div>
 
-            <div>
-              <label className="block text-[#47574B] font-bold uppercase tracking-wider text-[10px] mb-1">
-                Category
-              </label>
-              <select
-                id="input-product-category"
-                value={category}
-                onChange={(e) => setCategory(e.target.value as 'yoghurt' | 'pastries')}
-                className="w-full px-3 py-2 rounded-xl border border-[#D9D3C7] bg-white text-[#1C211E] font-medium focus:ring-2 focus:ring-[#45634D] focus:outline-hidden"
-              >
-                <option value="yoghurt">Yoghurt Line</option>
-                <option value="pastries">Pastries / Bakery Line</option>
-              </select>
-            </div>
+          {/* Product Name Display / Override */}
+          <div>
+            <label className="block text-[#47574B] font-bold uppercase tracking-wider text-[10px] mb-1">
+              Display Name (Optional Customization)
+            </label>
+            <input
+              id="input-product-display-name"
+              type="text"
+              placeholder={resolvedName}
+              value={customName}
+              onChange={(e) => setCustomName(e.target.value)}
+              className="w-full px-3 py-2 rounded-xl border border-[#D9D3C7] bg-white text-[#1C211E] font-medium focus:ring-2 focus:ring-[#45634D] focus:outline-hidden"
+            />
+            <p className="text-[11px] text-[#697A6F] mt-1">
+              Will display in invoices and records as:{' '}
+              <span className="font-bold text-[#1C211E]">{resolvedName}</span>
+            </p>
           </div>
 
           {/* Description */}
@@ -242,7 +359,7 @@ export const AddProductModal: React.FC<AddProductModalProps> = ({
             <input
               id="input-product-notes"
               type="text"
-              placeholder="e.g. Standard batch packaging with tamper-evident seal"
+              placeholder={category === 'electricity' ? 'e.g. 3-phase grid tariff, generator diesel share and maintenance' : 'e.g. Standard batch packaging with tamper-evident seal'}
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               className="w-full px-3 py-2 rounded-xl border border-[#D9D3C7] bg-white text-[#1C211E] font-medium focus:ring-2 focus:ring-[#45634D] focus:outline-hidden"
@@ -262,10 +379,14 @@ export const AddProductModal: React.FC<AddProductModalProps> = ({
             <button
               type="submit"
               id="save-add-product-btn"
-              className="px-5 py-2 rounded-xl bg-[#45634D] hover:bg-[#38533F] text-white font-bold transition cursor-pointer shadow-xs flex items-center gap-1.5"
+              className={`px-5 py-2 rounded-xl text-white font-bold transition cursor-pointer shadow-xs flex items-center gap-1.5 ${
+                category === 'electricity'
+                  ? 'bg-amber-600 hover:bg-amber-700'
+                  : 'bg-[#45634D] hover:bg-[#38533F]'
+              }`}
             >
-              <Plus className="w-4 h-4" />
-              <span>Add Product</span>
+              {editingProduct ? <Save className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
+              <span>{editingProduct ? 'Save Service Changes' : 'Add Service / Product'}</span>
             </button>
           </div>
         </form>

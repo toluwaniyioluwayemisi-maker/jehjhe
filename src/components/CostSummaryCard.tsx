@@ -1,7 +1,7 @@
 import React from 'react';
 import { YoghurtProduct, CostItem, CurrencyConfig } from '../types';
 import { calculateProductCost, formatCurrency } from '../utils/storage';
-import { Plus, HelpCircle, Layers, Tag, TrendingUp, AlertCircle, Edit3 } from 'lucide-react';
+import { Plus, HelpCircle, Layers, Tag, TrendingUp, AlertCircle, Edit3, Zap } from 'lucide-react';
 
 interface CostSummaryCardProps {
   product: YoghurtProduct;
@@ -50,9 +50,19 @@ export const CostSummaryCard: React.FC<CostSummaryCardProps> = ({
       <div className="relative z-10">
         {/* Product & Tag row */}
         <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <span className="px-2.5 py-1 rounded-md text-xs font-bold tracking-wide uppercase bg-[#45634D] text-[#F9F7F2] border border-[#5C7E65]">
               {product.size}
+            </span>
+            <span className={`px-2.5 py-1 rounded-md text-xs font-bold tracking-wide flex items-center gap-1 border ${
+              product.category === 'electricity'
+                ? 'bg-amber-400 text-amber-950 border-amber-300'
+                : product.category === 'pastries'
+                ? 'bg-amber-100 text-amber-900 border-amber-200'
+                : 'bg-[#314A37] text-[#DCEADE] border-[#42614A]'
+            }`}>
+              {product.category === 'electricity' && <Zap className="w-3 h-3 fill-amber-950" />}
+              <span>{product.category === 'electricity' ? 'Electricity Service' : product.category === 'pastries' ? 'Pastries' : 'Yoghurt'}</span>
             </span>
             <h2 className="text-lg sm:text-xl font-bold font-display text-white tracking-tight">
               {product.name}

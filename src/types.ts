@@ -1,11 +1,45 @@
+export type ServiceCategory = 'yoghurt' | 'pastries' | 'electricity';
+
+export interface ServiceCategoryDefinition {
+  id: ServiceCategory;
+  label: string;
+  shortLabel: string;
+  badgeColor: string;
+  iconName: 'Milk' | 'Sparkles' | 'Zap';
+}
+
+export const SERVICE_CATEGORIES: ServiceCategoryDefinition[] = [
+  {
+    id: 'yoghurt',
+    label: 'Yoghurt Line',
+    shortLabel: 'Yoghurt',
+    badgeColor: 'bg-[#E8EFEA] text-[#2F4535] border-[#C5D9CA]',
+    iconName: 'Milk',
+  },
+  {
+    id: 'pastries',
+    label: 'Pastries / Bakery',
+    shortLabel: 'Pastries',
+    badgeColor: 'bg-[#FDF3E7] text-[#9A5B2D] border-[#EAD5C3]',
+    iconName: 'Sparkles',
+  },
+  {
+    id: 'electricity',
+    label: 'Electricity / Electrical Services',
+    shortLabel: 'Electricity',
+    badgeColor: 'bg-[#FEF9C3] text-[#854D0E] border-[#FDE047]',
+    iconName: 'Zap',
+  },
+];
+
 export interface YoghurtProduct {
   id: string;
-  productType: string; // 'Normal Yoghurt' | 'Greek Yoghurt'
-  size: string;        // '30cl' | '50cl' | '500ml'
+  productType: string; // 'Normal Yoghurt' | 'Greek Yoghurt' | 'Electricity & Utility' etc.
+  size: string;        // '30cl' | '50cl' | '500ml' | 'Service Unit'
   name: string;        // 'Normal Yoghurt — 30cl'
-  category: 'yoghurt' | 'pastries';
+  category: ServiceCategory;
   description?: string;
-  sellingPrice?: number; // Selling price per bottle (e.g. 700, 1000, 1800)
+  sellingPrice?: number; // Selling price per unit (e.g. 700, 1000, 1800, 45000)
 }
 
 export interface PriceHistoryRecord {
@@ -51,13 +85,14 @@ export const STANDARD_COST_ITEMS: string[] = [
 // ============================================================================
 
 export interface OrderItem {
-  productId: string; // 'normal-30cl' | 'normal-50cl' | 'greek-500ml'
+  productId: string; // 'normal-30cl' | 'normal-50cl' | 'greek-500ml' etc.
   productName: string; // e.g. 'Normal Yoghurt — 30cl'
-  productType: string; // 'Normal Yoghurt' | 'Greek Yoghurt'
-  size: string; // '30cl' | '50cl' | '500ml'
+  productType: string; // 'Normal Yoghurt' | 'Greek Yoghurt' | 'Electricity & Utility'
+  size: string; // '30cl' | '50cl' | '500ml' | 'Service'
   quantity: number;
-  unitPrice?: number; // Selling price per bottle at time order was recorded
-  unitCost?: number;  // Unit production cost per bottle at time order was recorded
+  unitPrice?: number; // Selling price per unit at time order was recorded
+  unitCost?: number;  // Unit production cost per unit at time order was recorded
+  category?: ServiceCategory;
 }
 
 export interface OrderRecord {
@@ -73,6 +108,9 @@ export interface OrderRecord {
   amountPaid?: number;
   workerName?: string;
   workerStatus?: 'pending' | 'completed';
+  category?: ServiceCategory;
+  serviceCategory?: ServiceCategory;
+  jobCategory?: ServiceCategory;
 }
 
 // Itemized Financial Computation Result
@@ -118,6 +156,7 @@ export interface InventoryStockRecord {
   productName: string;
   productType: string;
   size: string;
+  category?: ServiceCategory;
   currentStock: number; // Bottles on hand
   lastUpdated: string; // ISO timestamp
 }

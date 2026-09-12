@@ -126,7 +126,7 @@ export const IngredientModal: React.FC<IngredientModalProps> = ({
           {/* Target Product / Size selection */}
           <div>
             <label className="block text-xs font-bold uppercase tracking-wider text-[#5D6D62] mb-1.5">
-              Yoghurt Product & Bottle Size
+              Service / Product Line
             </label>
             <select
               id="modal-product-select"
@@ -136,7 +136,7 @@ export const IngredientModal: React.FC<IngredientModalProps> = ({
             >
               {allProducts.map((p) => (
                 <option key={p.id} value={p.id}>
-                  {p.name}
+                  {p.name} ({p.category === 'electricity' ? '⚡ Electricity' : p.category === 'pastries' ? 'Pastries' : 'Yoghurt'})
                 </option>
               ))}
             </select>
@@ -149,7 +149,7 @@ export const IngredientModal: React.FC<IngredientModalProps> = ({
                 Cost Item Name <span className="text-[#A83232]">*</span>
               </label>
               <span className="text-[11px] text-[#45634D] font-medium">
-                Standard or Custom
+                {selectedProduct.category === 'electricity' ? 'Materials / Labour / Gear' : 'Ingredients / Packaging / Energy'}
               </span>
             </div>
 
@@ -157,7 +157,11 @@ export const IngredientModal: React.FC<IngredientModalProps> = ({
               id="modal-item-name-input"
               type="text"
               required
-              placeholder="e.g. Milk, Sugar, Culture / Starter, Energy, Bottle"
+              placeholder={
+                selectedProduct.category === 'electricity'
+                  ? 'e.g. Cables, Breaker, Electrician Labour, Logistics'
+                  : 'e.g. Milk, Sugar, Culture / Starter, Energy, Bottle'
+              }
               value={name}
               onChange={(e) => {
                 setName(e.target.value);
@@ -168,7 +172,10 @@ export const IngredientModal: React.FC<IngredientModalProps> = ({
 
             {/* Quick standard tags suggestions */}
             <div className="mt-2 flex flex-wrap gap-1">
-              {STANDARD_COST_ITEMS.slice(0, 6).map((stdName) => (
+              {(selectedProduct.category === 'electricity'
+                ? ['Cables & Wiring', 'Breaker / Sockets', 'Electrician Labour', 'Transit / Call-out', 'Conduits & Boxes', 'Testing & Tools']
+                : STANDARD_COST_ITEMS.slice(0, 6)
+              ).map((stdName) => (
                 <button
                   type="button"
                   key={stdName}
@@ -185,14 +192,14 @@ export const IngredientModal: React.FC<IngredientModalProps> = ({
             </div>
           </div>
 
-          {/* Unit Price for ONE Bottle */}
+          {/* Unit Price for ONE Unit / Bottle / Job */}
           <div>
             <div className="flex items-center justify-between mb-1.5">
               <label className="block text-xs font-bold uppercase tracking-wider text-[#5D6D62]">
-                Unit Price for 1 Bottle ({currency.symbol}) <span className="text-[#A83232]">*</span>
+                Unit Price for 1 {selectedProduct.category === 'electricity' ? 'Job / Unit' : 'Bottle'} ({currency.symbol}) <span className="text-[#A83232]">*</span>
               </label>
               <span className="text-[11px] text-[#45634D] font-semibold">
-                Single bottle portion
+                {selectedProduct.category === 'electricity' ? 'Per job allocation' : 'Single bottle portion'}
               </span>
             </div>
 
@@ -217,7 +224,7 @@ export const IngredientModal: React.FC<IngredientModalProps> = ({
               />
             </div>
             <p className="text-[11px] text-[#728277] mt-1">
-              Enter your calculated cost for this item for one <strong>{selectedProduct.size}</strong> bottle.
+              Enter your calculated cost for this item for one <strong>{selectedProduct.size}</strong> {selectedProduct.category === 'electricity' ? 'job/service' : 'bottle'}.
             </p>
           </div>
 

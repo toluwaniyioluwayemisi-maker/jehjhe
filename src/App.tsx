@@ -107,8 +107,9 @@ export default function App() {
   // Demo Mode State (Isolated client-side sample data)
   const [isDemoModeActive, setIsDemoModeActive] = useState<boolean>(false);
 
-  // Add Product Modal State
+  // Add/Edit Product Modal State
   const [isAddProductModalOpen, setIsAddProductModalOpen] = useState<boolean>(false);
+  const [editingProduct, setEditingProduct] = useState<YoghurtProduct | null>(null);
 
   // Sub-view Tab for Costs: 'manage' or 'overview'
   const [costSubTab, setCostSubTab] = useState<'manage' | 'overview'>('manage');
@@ -596,9 +597,9 @@ export default function App() {
     );
   }
 
-  // 2. Unauthenticated Experience (Redirected to login/signup screen)
-  if (!currentUser) {
-    return <AuthScreen />;
+  // 2. Unauthenticated Experience (Redirected to login/signup screen, unless user chose Demo Mode)
+  if (!currentUser && !isDemoModeActive) {
+    return <AuthScreen onExploreDemo={() => setIsDemoModeActive(true)} />;
   }
 
   return (
@@ -618,6 +619,7 @@ export default function App() {
         onOpenSellingPrices={() => handleOpenSellingPrices()}
         currentUser={currentUser}
         onSignOut={handleSignOut}
+        onOpenSignIn={() => setIsDemoModeActive(false)}
       />
 
       {/* Cloud Synchronizing Indicator Bar */}
@@ -787,7 +789,10 @@ export default function App() {
                     setMainTab(tab);
                   }
                 }}
-                onOpenAddProductModal={() => setIsAddProductModalOpen(true)}
+                onOpenAddProductModal={() => {
+                  setEditingProduct(null);
+                  setIsAddProductModalOpen(true);
+                }}
                 onOpenNewOrderModal={() => setMainTab('orders')}
                 onOpenNewExpenseModal={() => setMainTab('expenses')}
               />
@@ -858,7 +863,14 @@ export default function App() {
                     costItems={costItems}
                     currency={currency}
                     onOpenPriceModal={() => handleOpenSellingPrices(selectedProductId)}
-                    onOpenAddProductModal={() => setIsAddProductModalOpen(true)}
+                    onOpenAddProductModal={() => {
+                      setEditingProduct(null);
+                      setIsAddProductModalOpen(true);
+                    }}
+                    onEditProduct={(prod) => {
+                      setEditingProduct(prod);
+                      setIsAddProductModalOpen(true);
+                    }}
                   />
                 </section>
 
@@ -1024,14 +1036,18 @@ export default function App() {
         selectedProductId={sellingPriceTargetProductId}
       />
 
-      {/* Add Product Modal */}
+      {/* Add / Edit Product Modal */}
       <AddProductModal
         isOpen={isAddProductModalOpen}
-        onClose={() => setIsAddProductModalOpen(false)}
+        onClose={() => {
+          setIsAddProductModalOpen(false);
+          setEditingProduct(null);
+        }}
         onSaveProduct={handleSaveProduct}
         onQuickLoadStandardProducts={handleQuickLoadStandardProducts}
         currency={currency}
         existingProductIds={products.map((p) => p.id)}
+        editingProduct={editingProduct}
       />
 
       {/* Mobile Floating Action Button (for Cost Items when in costs tab) */}

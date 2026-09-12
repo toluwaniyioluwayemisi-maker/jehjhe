@@ -251,8 +251,25 @@ export async function signInWithGoogle(): Promise<User | null> {
     throw new Error('Firebase Authentication is not configured yet.');
   }
   const provider = new GoogleAuthProvider();
-  const result = await signInWithPopup(auth, provider);
-  return result.user;
+  provider.setCustomParameters({
+    prompt: 'select_account',
+  });
+
+  try {
+    const result = await signInWithPopup(auth, provider);
+    return result.user;
+  } catch (err: unknown) {
+    const error = err as { code?: string; message?: string };
+    if (error?.code === 'auth/unauthorized-domain') {
+      const hostname = typeof window !== 'undefined' ? window.location.hostname : 'current-domain';
+      const enrichedErr = new Error(
+        `Domain "${hostname}" is not authorized for OAuth operations in Firebase project "${auth.app.options.projectId}". Please add "${hostname}" and "localhost" to Firebase Console → Authentication → Settings → Authorized domains.`
+      );
+      Object.assign(enrichedErr, { code: 'auth/unauthorized-domain', hostname });
+      throw enrichedErr;
+    }
+    throw err;
+  }
 }
 
 export async function signInWithEmail(email: string, password: string): Promise<User | null> {
@@ -260,8 +277,20 @@ export async function signInWithEmail(email: string, password: string): Promise<
   if (!auth) {
     throw new Error('Firebase Authentication is not configured yet.');
   }
-  const credential: UserCredential = await signInWithEmailAndPassword(auth, email, password);
-  return credential.user;
+  try {
+    const credential: UserCredential = await signInWithEmailAndPassword(auth, email, password);
+    return credential.user;
+  } catch (err: unknown) {
+    const error = err as { code?: string; message?: string };
+    if (error?.code === 'auth/operation-not-allowed') {
+      const enrichedErr = new Error(
+        'Email/Password sign-in is not enabled in Firebase Console for this project. Please sign in using "Continue with Google", or enable Email/Password provider in Firebase Console → Authentication → Sign-in method.'
+      );
+      Object.assign(enrichedErr, { code: 'auth/operation-not-allowed' });
+      throw enrichedErr;
+    }
+    throw err;
+  }
 }
 
 export async function signUpWithEmail(email: string, password: string): Promise<User | null> {
@@ -269,8 +298,20 @@ export async function signUpWithEmail(email: string, password: string): Promise<
   if (!auth) {
     throw new Error('Firebase Authentication is not configured yet.');
   }
-  const credential: UserCredential = await createUserWithEmailAndPassword(auth, email, password);
-  return credential.user;
+  try {
+    const credential: UserCredential = await createUserWithEmailAndPassword(auth, email, password);
+    return credential.user;
+  } catch (err: unknown) {
+    const error = err as { code?: string; message?: string };
+    if (error?.code === 'auth/operation-not-allowed') {
+      const enrichedErr = new Error(
+        'Email/Password sign-up is not enabled in Firebase Console for this project. Please sign in using "Continue with Google", or enable Email/Password provider in Firebase Console → Authentication → Sign-in method.'
+      );
+      Object.assign(enrichedErr, { code: 'auth/operation-not-allowed' });
+      throw enrichedErr;
+    }
+    throw err;
+  }
 }
 
 export async function logOutFirebase(): Promise<void> {
@@ -548,130 +589,147 @@ export async function migrateLocalDataToFirestore(payload: MigrationPayload, tar
   }
 
   try {
+    // 0. Ensure root user document exists
+    const userRef = doc(db, 'users', userId);
+    await setDoc(userRef, {
+      userId,
+      lastActive: new Date().toISOString(),
+    }, { merge: true });
+
     // 1. Migrate Cost Items in batches
-    const costBatch = writeBatch(db);
-    for (const item of payload.costItems) {
-      const ref = doc(db, 'users', userId, 'cost_items', item.id);
-      costBatch.set(ref, {
-        id: item.id,
-        name: item.name,
-        productId: item.productId,
-        unitPricePerBottle: item.unitPricePerBottle,
-        notes: item.notes || '',
-        lastUpdated: item.lastUpdated || new Date().toISOString(),
-        priceHistory: item.priceHistory || [],
-      }, { merge: true });
+    if (payload.costItems && payload.costItems.length > 0) {
+      const costBatch = writeBatch(db);
+      for (const item of payload.costItems) {
+        const ref = doc(db, 'users', userId, 'cost_items', item.id);
+        costBatch.set(ref, {
+          id: item.id,
+          name: item.name,
+          productId: item.productId,
+          unitPricePerBottle: item.unitPricePerBottle,
+          notes: item.notes || '',
+          lastUpdated: item.lastUpdated || new Date().toISOString(),
+          priceHistory: item.priceHistory || [],
+        }, { merge: true });
+      }
+      await costBatch.commit();
     }
-    await costBatch.commit();
 
     // 2. Migrate Products
-    const prodBatch = writeBatch(db);
-    for (const prod of payload.products) {
-      const ref = doc(db, 'users', userId, 'products', prod.id);
-      prodBatch.set(ref, {
-        id: prod.id,
-        name: prod.name,
-        size: prod.size,
-        productType: prod.productType,
-        category: prod.category || 'yoghurt',
-        description: prod.description || '',
-        sellingPrice: prod.sellingPrice ?? 0,
-      }, { merge: true });
+    if (payload.products && payload.products.length > 0) {
+      const prodBatch = writeBatch(db);
+      for (const prod of payload.products) {
+        const ref = doc(db, 'users', userId, 'products', prod.id);
+        prodBatch.set(ref, {
+          id: prod.id,
+          name: prod.name,
+          size: prod.size,
+          productType: prod.productType || 'Standard',
+          category: prod.category || 'yoghurt',
+          description: prod.description || '',
+          sellingPrice: prod.sellingPrice ?? 0,
+        }, { merge: true });
+      }
+      await prodBatch.commit();
     }
-    await prodBatch.commit();
 
     // 3. Migrate Orders (CRITICAL: Locks exact historical snapshots)
-    const orderBatch = writeBatch(db);
-    for (const ord of payload.orders) {
-      const ref = doc(db, 'users', userId, 'orders', ord.id);
-      orderBatch.set(ref, {
-        id: ord.id,
-        referenceNumber: ord.referenceNumber,
-        date: ord.date,
-        customerName: ord.customerName || '',
-        customerPhone: ord.customerPhone || '',
-        notes: ord.notes || '',
-        items: ord.items.map((item) => ({
-          productId: item.productId,
-          productName: item.productName,
-          productType: item.productType,
-          size: item.size,
-          quantity: item.quantity,
-          unitPrice: item.unitPrice ?? 0,
-          unitCost: item.unitCost ?? 0,
-        })),
-        createdAt: ord.createdAt || new Date().toISOString(),
-      }, { merge: true });
+    if (payload.orders && payload.orders.length > 0) {
+      const orderBatch = writeBatch(db);
+      for (const ord of payload.orders) {
+        const ref = doc(db, 'users', userId, 'orders', ord.id);
+        orderBatch.set(ref, {
+          id: ord.id,
+          referenceNumber: ord.referenceNumber,
+          date: ord.date,
+          customerName: ord.customerName || '',
+          customerPhone: ord.customerPhone || '',
+          notes: ord.notes || '',
+          items: ord.items.map((item) => ({
+            productId: item.productId,
+            productName: item.productName,
+            productType: item.productType,
+            size: item.size,
+            quantity: item.quantity,
+            unitPrice: item.unitPrice ?? 0,
+            unitCost: item.unitCost ?? 0,
+          })),
+          createdAt: ord.createdAt || new Date().toISOString(),
+        }, { merge: true });
+      }
+      await orderBatch.commit();
     }
-    await orderBatch.commit();
 
     // 4. Migrate Inventory Balances
-    const invBatch = writeBatch(db);
-    for (const inv of payload.inventory) {
-      const ref = doc(db, 'users', userId, 'inventory', inv.productId);
-      invBatch.set(ref, {
-        productId: inv.productId,
-        productName: inv.productName,
-        productType: inv.productType,
-        size: inv.size,
-        currentStock: inv.currentStock,
-        lastUpdated: inv.lastUpdated || new Date().toISOString(),
-      }, { merge: true });
+    if (payload.inventory && payload.inventory.length > 0) {
+      const invBatch = writeBatch(db);
+      for (const inv of payload.inventory) {
+        const ref = doc(db, 'users', userId, 'inventory', inv.productId);
+        invBatch.set(ref, {
+          productId: inv.productId,
+          productName: inv.productName,
+          productType: inv.productType,
+          size: inv.size,
+          currentStock: inv.currentStock,
+          lastUpdated: inv.lastUpdated || new Date().toISOString(),
+        }, { merge: true });
+      }
+      await invBatch.commit();
     }
-    await invBatch.commit();
 
     // 5. Migrate Stock Logs (Audit records)
-    const logBatch = writeBatch(db);
-    for (const log of payload.stockLogs) {
-      const ref = doc(db, 'users', userId, 'stock_logs', log.id);
-      logBatch.set(ref, {
-        id: log.id,
-        date: log.date,
-        productId: log.productId,
-        changeType: log.changeType,
-        quantityChange: log.quantityChange,
-        notes: log.notes || '',
-        createdAt: log.createdAt || new Date().toISOString(),
-      }, { merge: true });
+    if (payload.stockLogs && payload.stockLogs.length > 0) {
+      const logBatch = writeBatch(db);
+      for (const log of payload.stockLogs) {
+        const ref = doc(db, 'users', userId, 'stock_logs', log.id);
+        logBatch.set(ref, {
+          id: log.id,
+          date: log.date,
+          productId: log.productId,
+          changeType: log.changeType,
+          quantityChange: log.quantityChange,
+          notes: log.notes || '',
+          createdAt: log.createdAt || new Date().toISOString(),
+        }, { merge: true });
+      }
+      await logBatch.commit();
     }
-    await logBatch.commit();
 
     // 6. Migrate Miscellaneous Expenses
-    const expBatch = writeBatch(db);
-    for (const exp of payload.miscellaneousExpenses) {
-      const ref = doc(db, 'users', userId, 'miscellaneous_expenses', exp.id);
-      expBatch.set(ref, {
-        id: exp.id,
-        description: exp.description,
-        amount: exp.amount,
-        date: exp.date,
-        notes: exp.notes || '',
-        createdAt: exp.createdAt || new Date().toISOString(),
-      }, { merge: true });
+    if (payload.miscellaneousExpenses && payload.miscellaneousExpenses.length > 0) {
+      const expBatch = writeBatch(db);
+      for (const exp of payload.miscellaneousExpenses) {
+        const ref = doc(db, 'users', userId, 'miscellaneous_expenses', exp.id);
+        expBatch.set(ref, {
+          id: exp.id,
+          description: exp.description,
+          amount: exp.amount,
+          date: exp.date,
+          notes: exp.notes || '',
+          createdAt: exp.createdAt || new Date().toISOString(),
+        }, { merge: true });
+      }
+      await expBatch.commit();
     }
-    await expBatch.commit();
 
     // 7. Migrate Settings
     const settingsRef = doc(db, 'users', userId, 'settings', 'config');
-    const settingsBatch = writeBatch(db);
-    settingsBatch.set(settingsRef, {
+    await setDoc(settingsRef, {
       businessName: 'Butch Master',
       currencyCode: payload.currency.code,
       currencySymbol: payload.currency.symbol,
       currencyName: payload.currency.name,
       updatedAt: new Date().toISOString(),
     }, { merge: true });
-    await settingsBatch.commit();
 
     return {
       success: true,
       counts: {
-        costItems: payload.costItems.length,
-        products: payload.products.length,
-        orders: payload.orders.length,
-        inventory: payload.inventory.length,
-        stockLogs: payload.stockLogs.length,
-        miscellaneousExpenses: payload.miscellaneousExpenses.length,
+        costItems: payload.costItems?.length || 0,
+        products: payload.products?.length || 0,
+        orders: payload.orders?.length || 0,
+        inventory: payload.inventory?.length || 0,
+        stockLogs: payload.stockLogs?.length || 0,
+        miscellaneousExpenses: payload.miscellaneousExpenses?.length || 0,
         settings: 1,
       },
       timestamp: new Date().toISOString(),

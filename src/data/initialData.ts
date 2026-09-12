@@ -46,6 +46,15 @@ export const INITIAL_PRODUCTS: YoghurtProduct[] = [
     description: '500ml jar/tub of rich strained Greek yoghurt',
     sellingPrice: 1800,
   },
+  {
+    id: 'elec-diagnostic-wiring',
+    productType: 'Electrical Service',
+    size: 'Job',
+    name: 'Electrical Diagnostics & Maintenance',
+    category: 'electricity',
+    description: 'Circuit troubleshooting, breaker checks, and safety wiring maintenance',
+    sellingPrice: 18000,
+  },
 ];
 
 const createInitialHistory = (price: number) => [
@@ -338,6 +347,36 @@ export const INITIAL_INGREDIENTS: CostItem[] = [
     lastUpdated: new Date().toISOString(),
     priceHistory: createInitialHistory(25),
   },
+  // ==========================================
+  // Electricity Service — Diagnostics & Maintenance
+  // ==========================================
+  {
+    id: 'cost-elec-cables',
+    productId: 'elec-diagnostic-wiring',
+    name: 'Wiring, Breakers & Consumables',
+    unitPricePerBottle: 4200,
+    notes: 'Copper conductors, conduit pipes, insulation and terminal blocks per job',
+    lastUpdated: new Date().toISOString(),
+    priceHistory: createInitialHistory(4200),
+  },
+  {
+    id: 'cost-elec-labour',
+    productId: 'elec-diagnostic-wiring',
+    name: 'Certified Electrician Labour',
+    unitPricePerBottle: 5000,
+    notes: 'Licensed master electrician on-site diagnosis and repair labor',
+    lastUpdated: new Date().toISOString(),
+    priceHistory: createInitialHistory(5000),
+  },
+  {
+    id: 'cost-elec-transit',
+    productId: 'elec-diagnostic-wiring',
+    name: 'Transit & Equipment Call-out',
+    unitPricePerBottle: 1800,
+    notes: 'Transport, tools transit, safety gear and diagnostic equipment usage',
+    lastUpdated: new Date().toISOString(),
+    priceHistory: createInitialHistory(1800),
+  },
 ];
 
 export const INITIAL_INVENTORY: InventoryStockRecord[] = [
@@ -346,6 +385,7 @@ export const INITIAL_INVENTORY: InventoryStockRecord[] = [
     productName: 'Normal Yoghurt — 30cl',
     productType: 'Normal Yoghurt',
     size: '30cl',
+    category: 'yoghurt',
     currentStock: 45,
     lastUpdated: new Date().toISOString(),
   },
@@ -354,6 +394,7 @@ export const INITIAL_INVENTORY: InventoryStockRecord[] = [
     productName: 'Normal Yoghurt — 50cl',
     productType: 'Normal Yoghurt',
     size: '50cl',
+    category: 'yoghurt',
     currentStock: 30,
     lastUpdated: new Date().toISOString(),
   },
@@ -362,7 +403,17 @@ export const INITIAL_INVENTORY: InventoryStockRecord[] = [
     productName: 'Greek Yoghurt — 500ml',
     productType: 'Greek Yoghurt',
     size: '500ml',
+    category: 'yoghurt',
     currentStock: 20,
+    lastUpdated: new Date().toISOString(),
+  },
+  {
+    productId: 'elec-diagnostic-wiring',
+    productName: 'Electrical Diagnostics & Maintenance',
+    productType: 'Electrical Service',
+    size: 'Job',
+    category: 'electricity',
+    currentStock: 10,
     lastUpdated: new Date().toISOString(),
   },
 ];
@@ -469,9 +520,33 @@ export const INITIAL_ORDERS: OrderRecord[] = [
         productName: 'Greek Yoghurt — 500ml',
         productType: 'Greek Yoghurt',
         size: '500ml',
+        category: 'yoghurt',
         quantity: 2,
         unitPrice: 1800,
         unitCost: 1010,
+      },
+    ],
+    createdAt: new Date().toISOString(),
+  },
+  {
+    id: 'order-4',
+    referenceNumber: 'JOB-2026-004',
+    date: new Date().toISOString().slice(0, 10),
+    customerName: 'Apex Industrial Estate',
+    customerPhone: '0809-123-4567',
+    notes: 'Diagnostic inspection and breaker panel wiring maintenance',
+    category: 'electricity',
+    serviceCategory: 'electricity',
+    items: [
+      {
+        productId: 'elec-diagnostic-wiring',
+        productName: 'Electrical Diagnostics & Maintenance',
+        productType: 'Electrical Service',
+        size: 'Job',
+        category: 'electricity',
+        quantity: 1,
+        unitPrice: 18000,
+        unitCost: 11000,
       },
     ],
     createdAt: new Date().toISOString(),

@@ -9,6 +9,7 @@ import {
   Sparkles,
   Info,
   DollarSign,
+  Zap,
 } from 'lucide-react';
 import { YoghurtProduct, CostItem, CurrencyConfig } from '../types';
 import { formatCurrency, calculateProductCost } from '../utils/storage';
@@ -137,6 +138,8 @@ export const SellingPriceModal: React.FC<SellingPriceModalProps> = ({
             {products.map((prod) => {
               const unitCost = calculateProductCost(prod.id, costItems);
               const isGreek = prod.productType.toLowerCase().includes('greek');
+              const isElectricity = (prod.category || 'yoghurt') === 'electricity';
+              const isPastries = (prod.category || 'yoghurt') === 'pastries';
               const rawInput = priceMap[prod.id] || '';
               const enteredPrice = parseFloat(rawInput) || 0;
               const hasInput = rawInput.trim() !== '';
@@ -160,25 +163,40 @@ export const SellingPriceModal: React.FC<SellingPriceModalProps> = ({
                     <div className="flex items-center gap-2">
                       <div
                         className={`w-7 h-7 rounded-lg flex items-center justify-center text-xs ${
-                          isGreek
+                          isElectricity
+                            ? 'bg-amber-100 text-amber-700'
+                            : isGreek
                             ? 'bg-[#EEF4EF] text-[#45634D]'
+                            : isPastries
+                            ? 'bg-orange-100 text-orange-800'
                             : 'bg-[#F0ECE4] text-[#3D4B42]'
                         }`}
                       >
-                        {isGreek ? <Sparkles className="w-3.5 h-3.5" /> : <Milk className="w-3.5 h-3.5" />}
+                        {isElectricity ? <Zap className="w-3.5 h-3.5 fill-amber-700" /> : isGreek ? <Sparkles className="w-3.5 h-3.5" /> : <Milk className="w-3.5 h-3.5" />}
                       </div>
                       <div>
-                        <h3 className="font-bold text-xs sm:text-sm text-[#1C211E]">
-                          {prod.name}
-                        </h3>
+                        <div className="flex items-center gap-1.5">
+                          <h3 className="font-bold text-xs sm:text-sm text-[#1C211E]">
+                            {prod.name}
+                          </h3>
+                          <span className={`text-[10px] px-1.5 py-0.2 rounded font-bold uppercase ${
+                            isElectricity
+                              ? 'bg-amber-100 text-amber-900 border border-amber-300'
+                              : isPastries
+                              ? 'bg-orange-100 text-orange-900'
+                              : 'bg-[#E8EFEA] text-[#2F4535]'
+                          }`}>
+                            {isElectricity ? '⚡ Electricity' : isPastries ? 'Pastries' : 'Yoghurt'}
+                          </span>
+                        </div>
                         <span className="text-[11px] text-[#697A6F]">
-                          Size: <strong className="text-[#1C211E]">{prod.size}</strong>
+                          Unit / Size: <strong className="text-[#1C211E]">{prod.size}</strong>
                         </span>
                       </div>
                     </div>
 
                     <span className="text-[11px] font-semibold px-2 py-0.5 rounded bg-[#F0EBE1] text-[#55635B]">
-                      Production Cost: {formatCurrency(unitCost, currency.symbol)}
+                      Cost: {formatCurrency(unitCost, currency.symbol)}
                     </span>
                   </div>
 
@@ -189,7 +207,7 @@ export const SellingPriceModal: React.FC<SellingPriceModalProps> = ({
                         htmlFor={`input-selling-price-${prod.id}`}
                         className="block text-[11px] font-bold text-[#55635B] mb-1"
                       >
-                        Selling Price per Bottle ({currency.symbol})
+                        Selling Price per Unit ({currency.symbol})
                       </label>
                       <div className="relative">
                         <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-bold text-[#697A6F]">
