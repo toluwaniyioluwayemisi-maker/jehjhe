@@ -15,6 +15,7 @@ import {
   Check,
   Globe,
   HelpCircle,
+  ArrowLeft,
 } from 'lucide-react';
 import {
   signInWithEmail,
@@ -169,8 +170,23 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
           </div>
         </div>
 
+        {/* Return to Workspace / Offline Mode Shortcut */}
+        {onExploreDemo && (
+          <div className="flex justify-center sm:justify-start mb-2">
+            <button
+              id="auth-back-to-app-btn"
+              type="button"
+              onClick={onExploreDemo}
+              className="inline-flex items-center gap-1.5 text-xs font-bold text-[#45634D] hover:text-[#1E2E23] bg-[#E8EFEA] hover:bg-[#DDE7DF] px-3 py-1.5 rounded-lg border border-[#C5D7C9] transition cursor-pointer shadow-2xs"
+            >
+              <ArrowLeft className="w-3.5 h-3.5" />
+              <span>Continue in Offline / Demo Mode (No Login)</span>
+            </button>
+          </div>
+        )}
+
         {/* Card Container */}
-        <div className="mt-6 bg-white py-7 px-6 sm:px-8 shadow-sm border border-[#E3DDD1] rounded-2xl space-y-5">
+        <div className="bg-white py-7 px-6 sm:px-8 shadow-sm border border-[#E3DDD1] rounded-2xl space-y-5">
           {/* Primary Recommended: Google Sign-In */}
           <div>
             <div className="flex items-center justify-between mb-2">

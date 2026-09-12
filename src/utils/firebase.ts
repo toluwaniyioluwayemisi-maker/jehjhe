@@ -23,14 +23,24 @@ import {
   type User,
   type UserCredential,
 } from 'firebase/auth';
-const appletConfigs = import.meta.glob<{ default?: Record<string, string> }>('../../firebase-applet-config.json', { eager: true });
-const appletConfig: Record<string, string> =
-  appletConfigs['../../firebase-applet-config.json']?.default ||
-  (appletConfigs['../../firebase-applet-config.json'] as unknown as Record<string, string>) ||
-  {};
+import appletConfig from '@/firebase-applet-config.json';
 import {
   DEFAULT_CURRENCIES,
+  INITIAL_PRODUCTS,
+  INITIAL_INGREDIENTS,
+  INITIAL_INVENTORY,
+  INITIAL_ORDERS,
+  INITIAL_STOCK_LOGS,
+  INITIAL_MISCELLANEOUS_EXPENSES,
 } from '../data/initialData';
+import {
+  getStoredProducts,
+  getStoredCostItems,
+  getStoredOrders,
+  getStoredInventory,
+  getStoredStockLogs,
+  getStoredMiscellaneousExpenses,
+} from './storage';
 import type {
   CostItem,
   YoghurtProduct,
@@ -368,12 +378,42 @@ export async function loadUserDataFromFirestore(userId: string): Promise<UserBus
 
     // Return the user's isolated workspace collections from Firestore.
     // If the collections are empty, it returns empty arrays without seeding any fake records.
-    const products: YoghurtProduct[] = prodSnap.docs.map((d) => d.data() as YoghurtProduct);
-    const costItems: CostItem[] = costSnap.docs.map((d) => d.data() as CostItem);
-    const orders: OrderRecord[] = orderSnap.docs.map((d) => d.data() as OrderRecord);
-    const inventory: InventoryStockRecord[] = invSnap.docs.map((d) => d.data() as InventoryStockRecord);
-    const stockLogs: StockLogEntry[] = logSnap.docs.map((d) => d.data() as StockLogEntry);
-    const miscellaneousExpenses: MiscellaneousExpense[] = expSnap.docs.map((d) => d.data() as MiscellaneousExpense);
+    let products: YoghurtProduct[] = prodSnap.docs.map((d) => d.data() as YoghurtProduct);
+    let costItems: CostItem[] = costSnap.docs.map((d) => d.data() as CostItem);
+    let orders: OrderRecord[] = orderSnap.docs.map((d) => d.data() as OrderRecord);
+    let inventory: InventoryStockRecord[] = invSnap.docs.map((d) => d.data() as InventoryStockRecord);
+    let stockLogs: StockLogEntry[] = logSnap.docs.map((d) => d.data() as StockLogEntry);
+    let miscellaneousExpenses: MiscellaneousExpense[] = expSnap.docs.map((d) => d.data() as MiscellaneousExpense);
+
+    // If new user or empty cloud workspace, auto-provision baseline data from local storage or defaults
+    if (products.length === 0) {
+      const storedProds = getStoredProducts();
+      const storedCosts = getStoredCostItems();
+      const storedOrders = getStoredOrders();
+      const storedInv = getStoredInventory();
+      const storedLogs = getStoredStockLogs();
+      const storedExp = getStoredMiscellaneousExpenses();
+
+      products = storedProds.length > 0 ? storedProds : INITIAL_PRODUCTS;
+      costItems = storedCosts.length > 0 ? storedCosts : INITIAL_INGREDIENTS;
+      orders = storedOrders.length > 0 ? storedOrders : INITIAL_ORDERS;
+      inventory = storedInv.length > 0 ? storedInv : INITIAL_INVENTORY;
+      stockLogs = storedLogs.length > 0 ? storedLogs : INITIAL_STOCK_LOGS;
+      miscellaneousExpenses = storedExp.length > 0 ? storedExp : INITIAL_MISCELLANEOUS_EXPENSES;
+
+      // Migrate to user's Firestore workspace in background so their cloud account is pre-populated
+      migrateLocalDataToFirestore({
+        products,
+        costItems,
+        orders,
+        inventory,
+        stockLogs,
+        miscellaneousExpenses,
+        currency: DEFAULT_CURRENCIES[0],
+      }, userId).catch((err) => {
+        console.warn('[Firestore] Background provisioning for user workspace:', err);
+      });
+    }
 
     // Update user root document with lastActive timestamp without touching business data
     const userRef = doc(db, 'users', userId);
@@ -404,7 +444,18 @@ export async function loadUserDataFromFirestore(userId: string): Promise<UserBus
       currency,
     };
   } catch (error) {
-    handleFirestoreError(error, OperationType.LIST, `users/${userId}`);
+    console.error(`[Firestore] Failed to load data for user ${userId}:`, error);
+    // Return resilient local fallback data so the user is never blocked or left with a blank screen
+    const storedProds = getStoredProducts();
+    return {
+      products: storedProds.length > 0 ? storedProds : INITIAL_PRODUCTS,
+      costItems: getStoredCostItems().length > 0 ? getStoredCostItems() : INITIAL_INGREDIENTS,
+      orders: getStoredOrders().length > 0 ? getStoredOrders() : INITIAL_ORDERS,
+      inventory: getStoredInventory().length > 0 ? getStoredInventory() : INITIAL_INVENTORY,
+      stockLogs: getStoredStockLogs().length > 0 ? getStoredStockLogs() : INITIAL_STOCK_LOGS,
+      miscellaneousExpenses: getStoredMiscellaneousExpenses().length > 0 ? getStoredMiscellaneousExpenses() : INITIAL_MISCELLANEOUS_EXPENSES,
+      currency: DEFAULT_CURRENCIES[0],
+    };
   }
 }
 

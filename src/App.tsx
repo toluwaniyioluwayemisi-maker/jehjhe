@@ -87,6 +87,7 @@ export default function App() {
   const [currentUser, setCurrentUser] = useState<User | null>(() => getCurrentUser());
   const [isAuthLoading, setIsAuthLoading] = useState<boolean>(true);
   const [isDataLoading, setIsDataLoading] = useState<boolean>(false);
+  const [showAuthScreen, setShowAuthScreen] = useState<boolean>(false);
 
   const [products, setProducts] = useState<YoghurtProduct[]>(() => getStoredProducts());
   const [costItems, setCostItems] = useState<CostItem[]>(() => getStoredCostItems());
@@ -133,6 +134,7 @@ export default function App() {
       setIsAuthLoading(false);
 
       if (user) {
+        setShowAuthScreen(false);
         setIsDataLoading(true);
         try {
           const userData = await loadUserDataFromFirestore(user.uid);
@@ -597,9 +599,14 @@ export default function App() {
     );
   }
 
-  // 2. Unauthenticated Experience (Redirected to login/signup screen, unless user chose Demo Mode)
-  if (!currentUser && !isDemoModeActive) {
-    return <AuthScreen onExploreDemo={() => setIsDemoModeActive(true)} />;
+  // 2. Authentication Screen (when user explicitly requests Sign In / Sign Up)
+  if (showAuthScreen && !currentUser) {
+    return (
+      <AuthScreen
+        onExploreDemo={() => setShowAuthScreen(false)}
+        onAuthSuccess={() => setShowAuthScreen(false)}
+      />
+    );
   }
 
   return (
@@ -619,7 +626,7 @@ export default function App() {
         onOpenSellingPrices={() => handleOpenSellingPrices()}
         currentUser={currentUser}
         onSignOut={handleSignOut}
-        onOpenSignIn={() => setIsDemoModeActive(false)}
+        onOpenSignIn={() => setShowAuthScreen(true)}
       />
 
       {/* Cloud Synchronizing Indicator Bar */}

@@ -45,8 +45,16 @@ export const IngredientList: React.FC<IngredientListProps> = ({
   const [inlineReasonInput, setInlineReasonInput] = useState<string>('');
 
   const safeCostItems = Array.isArray(costItems) ? costItems : [];
-  const productCostItems = safeCostItems.filter((i) => i.productId === product.id);
-  const totalCost = calculateProductCost(product.id, safeCostItems);
+  const productCostItems = product ? safeCostItems.filter((i) => i.productId === product.id) : [];
+  const totalCost = product ? calculateProductCost(product.id, safeCostItems) : 0;
+
+  if (!product) {
+    return (
+      <div className="bg-white rounded-2xl p-6 text-center border border-[#E8E2D7] text-[#55635B]">
+        No service or product selected. Please select or create a service from the selector above.
+      </div>
+    );
+  }
 
   const filteredItems = productCostItems.filter((item) =>
     item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||

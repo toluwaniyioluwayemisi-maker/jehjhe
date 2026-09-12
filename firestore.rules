@@ -2,12 +2,6 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Default deny all access unless explicitly granted
-    match /{document=**} {
-      allow read, write: if false;
-    }
-
-    // Helper functions
     function isSignedIn() {
       return request.auth != null;
     }
@@ -16,163 +10,19 @@ service cloud.firestore {
       return isSignedIn() && request.auth.uid == userId;
     }
 
-    function isValidId(id) {
-      return id is string && id.size() > 0 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_-]+$');
-    }
-
-    function incoming() {
-      return request.resource.data;
-    }
-
-    function existing() {
-      return resource.data;
-    }
-
-    // Business Owner access check
-    function isBusinessUser() {
-      return isSignedIn();
-    }
-
-    // Entity Validation Helpers
-    function isValidCostItem(data) {
-      return data.id is string && isValidId(data.id) &&
-             data.productId is string && isValidId(data.productId) &&
-             data.name is string && data.name.size() > 0 && data.name.size() <= 100 &&
-             data.unitPricePerBottle is number && data.unitPricePerBottle >= 0;
-    }
-
-    function isValidProduct(data) {
-      return data.id is string && isValidId(data.id) &&
-             data.name is string && data.name.size() > 0 && data.name.size() <= 100 &&
-             data.size is string && data.size.size() > 0 && data.size.size() <= 50 &&
-             data.sellingPrice is number && data.sellingPrice >= 0;
-    }
-
-    function isValidOrder(data) {
-      return data.id is string && isValidId(data.id) &&
-             data.referenceNumber is string && data.referenceNumber.size() > 0 && data.referenceNumber.size() <= 50 &&
-             data.date is string && (data.date.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}.*') || data.date.size() >= 10) &&
-             data.items is list && data.items.size() >= 0 && data.items.size() <= 100;
-    }
-
-    function isValidInventory(data) {
-      return data.productId is string && isValidId(data.productId) &&
-             data.currentStock is number && data.currentStock >= 0;
-    }
-
-    function isValidStockLog(data) {
-      return data.id is string && isValidId(data.id) &&
-             data.date is string && (data.date.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}.*') || data.date.size() >= 10) &&
-             data.productId is string && isValidId(data.productId) &&
-             data.quantityChange is number;
-    }
-
-    function isValidExpense(data) {
-      return data.id is string && isValidId(data.id) &&
-             data.date is string && (data.date.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}.*') || data.date.size() >= 10) &&
-             data.description is string && data.description.size() > 0 && data.description.size() <= 200 &&
-             data.amount is number && data.amount >= 0;
-    }
-
-    function isValidSettings(data) {
-      return data.businessName is string && data.businessName.size() > 0 && data.businessName.size() <= 100 &&
-             data.currencyCode is string && data.currencyCode.size() > 0 && data.currencyCode.size() <= 10 &&
-             data.currencySymbol is string && data.currencySymbol.size() > 0 && data.currencySymbol.size() <= 10;
-    }
-
     // Isolated User Data Workspace: strict user isolation
     match /users/{userId} {
-      allow read: if isOwner(userId);
-      allow create, update: if isOwner(userId) && isValidId(userId);
-      allow delete: if false;
+      allow read, write: if isOwner(userId);
 
-      // 1. User's Cost Items
-      match /cost_items/{itemId} {
-        allow get, list: if isOwner(userId);
-        allow create, update: if isOwner(userId) && isValidId(itemId) && isValidCostItem(incoming());
-        allow delete: if isOwner(userId) && isValidId(itemId);
-      }
-
-      // 2. User's Products
-      match /products/{productId} {
-        allow get, list: if isOwner(userId);
-        allow create, update: if isOwner(userId) && isValidId(productId) && isValidProduct(incoming());
-        allow delete: if isOwner(userId) && isValidId(productId);
-      }
-
-      // 3. User's Orders
-      match /orders/{orderId} {
-        allow get, list: if isOwner(userId);
-        allow create, update: if isOwner(userId) && isValidId(orderId) && isValidOrder(incoming());
-        allow delete: if isOwner(userId) && isValidId(orderId);
-      }
-
-      // 4. User's Inventory Balances
-      match /inventory/{productId} {
-        allow get, list: if isOwner(userId);
-        allow create, update: if isOwner(userId) && isValidId(productId) && isValidInventory(incoming());
-        allow delete: if isOwner(userId) && isValidId(productId);
-      }
-
-      // 5. User's Stock Logs
-      match /stock_logs/{logId} {
-        allow get, list: if isOwner(userId);
-        allow create: if isOwner(userId) && isValidId(logId) && isValidStockLog(incoming());
-        allow delete: if isOwner(userId) && isValidId(logId);
-        allow update: if false; // immutable audit log
-      }
-
-      // 6. User's Miscellaneous Expenses
-      match /miscellaneous_expenses/{expenseId} {
-        allow get, list: if isOwner(userId);
-        allow create, update: if isOwner(userId) && isValidId(expenseId) && isValidExpense(incoming());
-        allow delete: if isOwner(userId) && isValidId(expenseId);
-      }
-
-      // 7. User's Settings
-      match /settings/{docId} {
-        allow get: if isOwner(userId);
-        allow create, update: if isOwner(userId) && isValidId(docId) && isValidSettings(incoming());
-        allow delete: if false;
+      // User's Subcollections (products, cost_items, orders, inventory, stock_logs, expenses, settings)
+      match /{allSubcollections=**} {
+        allow read, write: if isOwner(userId);
       }
     }
 
-    // Legacy Top-Level Collections (for backwards compatibility / fallback)
-    match /cost_items/{itemId} {
-      allow get, list: if isSignedIn();
-      allow create, update: if isSignedIn() && isValidId(itemId) && isValidCostItem(incoming());
-      allow delete: if isSignedIn() && isValidId(itemId);
-    }
-    match /products/{productId} {
-      allow get, list: if isSignedIn();
-      allow create, update: if isSignedIn() && isValidId(productId) && isValidProduct(incoming());
-      allow delete: if isSignedIn() && isValidId(productId);
-    }
-    match /orders/{orderId} {
-      allow get, list: if isSignedIn();
-      allow create, update: if isSignedIn() && isValidId(orderId) && isValidOrder(incoming());
-      allow delete: if isSignedIn() && isValidId(orderId);
-    }
-    match /inventory/{productId} {
-      allow get, list: if isSignedIn();
-      allow create, update: if isSignedIn() && isValidId(productId) && isValidInventory(incoming());
-      allow delete: if isSignedIn() && isValidId(productId);
-    }
-    match /stock_logs/{logId} {
-      allow get, list: if isSignedIn();
-      allow create: if isSignedIn() && isValidId(logId) && isValidStockLog(incoming());
-      allow delete: if isSignedIn() && isValidId(logId);
-      allow update: if false;
-    }
-    match /miscellaneous_expenses/{expenseId} {
-      allow get, list: if isSignedIn();
-      allow create, update: if isSignedIn() && isValidId(expenseId) && isValidExpense(incoming());
-      allow delete: if isSignedIn() && isValidId(expenseId);
-    }
-    match /settings/{docId} {
-      allow get: if isSignedIn();
-      allow create, update: if isSignedIn() && isValidId(docId) && isValidSettings(incoming());
-      allow delete: if false;
+    // Top-Level Collections fallback
+    match /{document=**} {
+      allow read, write: if isSignedIn();
     }
   }
 }
