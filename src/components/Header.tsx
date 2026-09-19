@@ -208,43 +208,20 @@ export const Header: React.FC<HeaderProps> = ({
               <RefreshCw className={`w-4 h-4 ${showSettings ? 'text-[#87B090] rotate-180' : ''} transition-transform duration-300`} />
             </button>
 
-            {/* Authenticated User Session Badge & Sign Out */}
-            {currentUser && (
-              <div className="flex items-center gap-1.5 pl-1.5 border-l border-[#2E3C32]">
-                <div className="hidden lg:flex flex-col items-end text-right">
-                  <span className="text-[11px] font-semibold text-[#E6EFE8] max-w-[140px] truncate" title={currentUser.email || undefined}>
-                    {currentUser.email || 'Business Owner'}
-                  </span>
-                  <span className="text-[9px] text-[#87B090] font-medium uppercase tracking-wider">
-                    Cloud Active
-                  </span>
-                </div>
-                {onSignOut && (
-                  <button
-                    id="header-signout-btn"
-                    onClick={onSignOut}
-                    className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-[#2B362F] hover:bg-[#3D2626] text-[#CBD8CE] hover:text-[#FCA5A5] text-xs font-semibold border border-[#3B4A3F] hover:border-[#653333] transition-colors cursor-pointer"
-                    title="Sign Out of Butch Master"
-                  >
-                    <LogOut className="w-3.5 h-3.5" />
-                    <span className="hidden sm:inline">Sign Out</span>
-                  </button>
-                )}
-              </div>
-            )}
-
-            {/* Unauthenticated / Demo Mode Sign In Shortcut */}
-            {!currentUser && onOpenSignIn && (
+            {/* Cloud Storage Status Indicator */}
+            <div className="flex items-center gap-1.5 pl-1.5 border-l border-[#2E3C32]">
               <button
-                id="header-signin-shortcut-btn"
-                onClick={onOpenSignIn}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#45634D] hover:bg-[#38523F] text-white text-xs font-bold border border-[#52775C] transition-colors cursor-pointer shadow-xs"
-                title="Sign in to your account"
+                type="button"
+                id="header-cloud-status-badge"
+                onClick={() => setShowCloudSync(true)}
+                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-[#2B362F] hover:bg-[#344239] text-[#CBD8CE] text-xs font-semibold border border-[#3B4A3F] transition cursor-pointer"
+                title="Firestore Cloud Storage Connected"
               >
-                <LogIn className="w-3.5 h-3.5" />
-                <span>Sign In</span>
+                <Cloud className="w-3.5 h-3.5 text-[#87B090]" />
+                <span className="hidden sm:inline text-[11px] text-[#E6EFE8]">Cloud Active</span>
+                <span className="w-1.5 h-1.5 rounded-full bg-[#87B090]"></span>
               </button>
-            )}
+            </div>
           </div>
         </div>
 

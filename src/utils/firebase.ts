@@ -341,8 +341,10 @@ export function subscribeToAuthState(callback: (user: User | null) => void): () 
 }
 
 // ============================================================================
-// User-Isolated Cloud Data Operations (users/{userId}/...)
+// Butch Masters Business Cloud Data Operations (Firestore)
 // ============================================================================
+
+export const BUTCH_MASTERS_WORKSPACE_ID = 'butch_masters_main';
 
 export interface UserBusinessData {
   products: YoghurtProduct[];
@@ -355,11 +357,12 @@ export interface UserBusinessData {
 }
 
 /**
- * Loads the user's isolated workspace from Firestore.
- * If this is a new user with an empty database, it automatically provisions the user
- * with baseline products, cost items, and inventory so they have an immediate working workspace.
+ * Loads the Butch Masters business workspace from Firestore.
+ * When opening for the first time with an empty database:
+ * - Products, Cost Items, and Inventory initialize from baseline catalogue.
+ * - Orders, Stock Logs, and Expenses start as empty lists (no fake business records).
  */
-export async function loadUserDataFromFirestore(userId: string): Promise<UserBusinessData> {
+export async function loadUserDataFromFirestore(workspaceId: string = BUTCH_MASTERS_WORKSPACE_ID): Promise<UserBusinessData> {
   const db = getFirebaseDb();
   if (!db) {
     throw new Error('Database connection is unavailable');
@@ -367,17 +370,15 @@ export async function loadUserDataFromFirestore(userId: string): Promise<UserBus
 
   try {
     const [prodSnap, costSnap, orderSnap, invSnap, logSnap, expSnap, settingsSnap] = await Promise.all([
-      getDocs(collection(db, 'users', userId, 'products')),
-      getDocs(collection(db, 'users', userId, 'cost_items')),
-      getDocs(collection(db, 'users', userId, 'orders')),
-      getDocs(collection(db, 'users', userId, 'inventory')),
-      getDocs(collection(db, 'users', userId, 'stock_logs')),
-      getDocs(collection(db, 'users', userId, 'miscellaneous_expenses')),
-      getDoc(doc(db, 'users', userId, 'settings', 'config')),
+      getDocs(collection(db, 'users', workspaceId, 'products')),
+      getDocs(collection(db, 'users', workspaceId, 'cost_items')),
+      getDocs(collection(db, 'users', workspaceId, 'orders')),
+      getDocs(collection(db, 'users', workspaceId, 'inventory')),
+      getDocs(collection(db, 'users', workspaceId, 'stock_logs')),
+      getDocs(collection(db, 'users', workspaceId, 'miscellaneous_expenses')),
+      getDoc(doc(db, 'users', workspaceId, 'settings', 'config')),
     ]);
 
-    // Return the user's isolated workspace collections from Firestore.
-    // If the collections are empty, it returns empty arrays without seeding any fake records.
     let products: YoghurtProduct[] = prodSnap.docs.map((d) => d.data() as YoghurtProduct);
     let costItems: CostItem[] = costSnap.docs.map((d) => d.data() as CostItem);
     let orders: OrderRecord[] = orderSnap.docs.map((d) => d.data() as OrderRecord);
@@ -385,43 +386,39 @@ export async function loadUserDataFromFirestore(userId: string): Promise<UserBus
     let stockLogs: StockLogEntry[] = logSnap.docs.map((d) => d.data() as StockLogEntry);
     let miscellaneousExpenses: MiscellaneousExpense[] = expSnap.docs.map((d) => d.data() as MiscellaneousExpense);
 
-    // If new user or empty cloud workspace, auto-provision baseline data from local storage or defaults
+    // If new cloud workspace, initialize product catalogue definitions
     if (products.length === 0) {
       const storedProds = getStoredProducts();
       const storedCosts = getStoredCostItems();
-      const storedOrders = getStoredOrders();
       const storedInv = getStoredInventory();
-      const storedLogs = getStoredStockLogs();
-      const storedExp = getStoredMiscellaneousExpenses();
 
       products = storedProds.length > 0 ? storedProds : INITIAL_PRODUCTS;
       costItems = storedCosts.length > 0 ? storedCosts : INITIAL_INGREDIENTS;
-      orders = storedOrders.length > 0 ? storedOrders : INITIAL_ORDERS;
       inventory = storedInv.length > 0 ? storedInv : INITIAL_INVENTORY;
-      stockLogs = storedLogs.length > 0 ? storedLogs : INITIAL_STOCK_LOGS;
-      miscellaneousExpenses = storedExp.length > 0 ? storedExp : INITIAL_MISCELLANEOUS_EXPENSES;
 
-      // Migrate to user's Firestore workspace in background so their cloud account is pre-populated
-      migrateLocalDataToFirestore({
-        products,
-        costItems,
-        orders,
-        inventory,
-        stockLogs,
-        miscellaneousExpenses,
-        currency: DEFAULT_CURRENCIES[0],
-      }, userId).catch((err) => {
-        console.warn('[Firestore] Background provisioning for user workspace:', err);
+      // Real transactional records start fresh without fake business data
+      orders = getStoredOrders();
+      stockLogs = getStoredStockLogs();
+      miscellaneousExpenses = getStoredMiscellaneousExpenses();
+
+      // Seed product catalog definitions to Firestore in background
+      saveUserProductsBatch(products, workspaceId).catch((err) => {
+        console.warn('[Firestore] Product catalog provisioning:', err);
       });
+      for (const item of costItems) {
+        saveUserCostItem(item, workspaceId).catch(() => {});
+      }
+      saveUserInventoryBatch(inventory, workspaceId).catch(() => {});
     }
 
-    // Update user root document with lastActive timestamp without touching business data
-    const userRef = doc(db, 'users', userId);
-    setDoc(userRef, {
-      userId,
+    // Update business root document with lastActive timestamp
+    const businessRef = doc(db, 'users', workspaceId);
+    setDoc(businessRef, {
+      workspaceId,
+      businessName: 'Butch Masters',
       lastActive: new Date().toISOString(),
     }, { merge: true }).catch((e) => {
-      console.warn('[Firestore] Failed to update user lastActive:', e);
+      console.warn('[Firestore] Failed to update workspace lastActive:', e);
     });
 
     let currency: CurrencyConfig = DEFAULT_CURRENCIES[0];
@@ -444,38 +441,51 @@ export async function loadUserDataFromFirestore(userId: string): Promise<UserBus
       currency,
     };
   } catch (error) {
-    console.error(`[Firestore] Failed to load data for user ${userId}:`, error);
-    // Return resilient local fallback data so the user is never blocked or left with a blank screen
+    console.error(`[Firestore] Failed to load data for workspace ${workspaceId}:`, error);
     const storedProds = getStoredProducts();
+    const storedCosts = getStoredCostItems();
+    const storedInv = getStoredInventory();
     return {
       products: storedProds.length > 0 ? storedProds : INITIAL_PRODUCTS,
-      costItems: getStoredCostItems().length > 0 ? getStoredCostItems() : INITIAL_INGREDIENTS,
-      orders: getStoredOrders().length > 0 ? getStoredOrders() : INITIAL_ORDERS,
-      inventory: getStoredInventory().length > 0 ? getStoredInventory() : INITIAL_INVENTORY,
-      stockLogs: getStoredStockLogs().length > 0 ? getStoredStockLogs() : INITIAL_STOCK_LOGS,
-      miscellaneousExpenses: getStoredMiscellaneousExpenses().length > 0 ? getStoredMiscellaneousExpenses() : INITIAL_MISCELLANEOUS_EXPENSES,
+      costItems: storedCosts.length > 0 ? storedCosts : INITIAL_INGREDIENTS,
+      orders: getStoredOrders(),
+      inventory: storedInv.length > 0 ? storedInv : INITIAL_INVENTORY,
+      stockLogs: getStoredStockLogs(),
+      miscellaneousExpenses: getStoredMiscellaneousExpenses(),
       currency: DEFAULT_CURRENCIES[0],
     };
   }
 }
 
-export async function saveUserProduct(userId: string, product: YoghurtProduct): Promise<void> {
+export async function saveUserProduct(
+  arg1: string | YoghurtProduct,
+  arg2?: YoghurtProduct | string
+): Promise<void> {
   const db = getFirebaseDb();
   if (!db) return;
+  const workspaceId = typeof arg1 === 'string' ? arg1 : (typeof arg2 === 'string' ? arg2 : BUTCH_MASTERS_WORKSPACE_ID);
+  const product = typeof arg1 === 'object' ? (arg1 as YoghurtProduct) : (typeof arg2 === 'object' ? (arg2 as YoghurtProduct) : null);
+  if (!product) return;
   try {
-    await setDoc(doc(db, 'users', userId, 'products', product.id), product, { merge: true });
+    await setDoc(doc(db, 'users', workspaceId, 'products', product.id), product, { merge: true });
   } catch (err) {
     console.error(`Failed to save product ${product.id} to Firestore:`, err);
   }
 }
 
-export async function saveUserProductsBatch(userId: string, products: YoghurtProduct[]): Promise<void> {
+export async function saveUserProductsBatch(
+  arg1: string | YoghurtProduct[],
+  arg2?: YoghurtProduct[] | string
+): Promise<void> {
   const db = getFirebaseDb();
   if (!db) return;
+  const workspaceId = typeof arg1 === 'string' ? arg1 : (typeof arg2 === 'string' ? arg2 : BUTCH_MASTERS_WORKSPACE_ID);
+  const products = Array.isArray(arg1) ? arg1 : (Array.isArray(arg2) ? arg2 : []);
+  if (products.length === 0) return;
   try {
     const batch = writeBatch(db);
     for (const p of products) {
-      batch.set(doc(db, 'users', userId, 'products', p.id), p, { merge: true });
+      batch.set(doc(db, 'users', workspaceId, 'products', p.id), p, { merge: true });
     }
     await batch.commit();
   } catch (err) {
@@ -483,53 +493,81 @@ export async function saveUserProductsBatch(userId: string, products: YoghurtPro
   }
 }
 
-export async function saveUserCostItem(userId: string, item: CostItem): Promise<void> {
+export async function saveUserCostItem(
+  arg1: string | CostItem,
+  arg2?: CostItem | string
+): Promise<void> {
   const db = getFirebaseDb();
   if (!db) return;
+  const workspaceId = typeof arg1 === 'string' ? arg1 : (typeof arg2 === 'string' ? arg2 : BUTCH_MASTERS_WORKSPACE_ID);
+  const item = typeof arg1 === 'object' ? (arg1 as CostItem) : (typeof arg2 === 'object' ? (arg2 as CostItem) : null);
+  if (!item) return;
   try {
-    await setDoc(doc(db, 'users', userId, 'cost_items', item.id), item, { merge: true });
+    await setDoc(doc(db, 'users', workspaceId, 'cost_items', item.id), item, { merge: true });
   } catch (err) {
     console.error(`Failed to save cost item ${item.id} to Firestore:`, err);
   }
 }
 
-export async function deleteUserCostItem(userId: string, itemId: string): Promise<void> {
+export async function deleteUserCostItem(
+  arg1: string,
+  arg2?: string
+): Promise<void> {
   const db = getFirebaseDb();
   if (!db) return;
+  const workspaceId = arg2 ? arg1 : BUTCH_MASTERS_WORKSPACE_ID;
+  const itemId = arg2 ? arg2 : arg1;
   try {
-    await deleteDoc(doc(db, 'users', userId, 'cost_items', itemId));
+    await deleteDoc(doc(db, 'users', workspaceId, 'cost_items', itemId));
   } catch (err) {
     console.error(`Failed to delete cost item ${itemId} from Firestore:`, err);
   }
 }
 
-export async function saveUserOrder(userId: string, order: OrderRecord): Promise<void> {
+export async function saveUserOrder(
+  arg1: string | OrderRecord,
+  arg2?: OrderRecord | string
+): Promise<void> {
   const db = getFirebaseDb();
   if (!db) return;
+  const workspaceId = typeof arg1 === 'string' ? arg1 : (typeof arg2 === 'string' ? arg2 : BUTCH_MASTERS_WORKSPACE_ID);
+  const order = typeof arg1 === 'object' ? (arg1 as OrderRecord) : (typeof arg2 === 'object' ? (arg2 as OrderRecord) : null);
+  if (!order) return;
   try {
-    await setDoc(doc(db, 'users', userId, 'orders', order.id), order, { merge: true });
+    await setDoc(doc(db, 'users', workspaceId, 'orders', order.id), order, { merge: true });
   } catch (err) {
     console.error(`Failed to save order ${order.id} to Firestore:`, err);
   }
 }
 
-export async function deleteUserOrder(userId: string, orderId: string): Promise<void> {
+export async function deleteUserOrder(
+  arg1: string,
+  arg2?: string
+): Promise<void> {
   const db = getFirebaseDb();
   if (!db) return;
+  const workspaceId = arg2 ? arg1 : BUTCH_MASTERS_WORKSPACE_ID;
+  const orderId = arg2 ? arg2 : arg1;
   try {
-    await deleteDoc(doc(db, 'users', userId, 'orders', orderId));
+    await deleteDoc(doc(db, 'users', workspaceId, 'orders', orderId));
   } catch (err) {
     console.error(`Failed to delete order ${orderId} from Firestore:`, err);
   }
 }
 
-export async function saveUserInventoryBatch(userId: string, inventory: InventoryStockRecord[]): Promise<void> {
+export async function saveUserInventoryBatch(
+  arg1: string | InventoryStockRecord[],
+  arg2?: InventoryStockRecord[] | string
+): Promise<void> {
   const db = getFirebaseDb();
   if (!db) return;
+  const workspaceId = typeof arg1 === 'string' ? arg1 : (typeof arg2 === 'string' ? arg2 : BUTCH_MASTERS_WORKSPACE_ID);
+  const inventory = Array.isArray(arg1) ? arg1 : (Array.isArray(arg2) ? arg2 : []);
+  if (inventory.length === 0) return;
   try {
     const batch = writeBatch(db);
     for (const inv of inventory) {
-      batch.set(doc(db, 'users', userId, 'inventory', inv.productId), inv, { merge: true });
+      batch.set(doc(db, 'users', workspaceId, 'inventory', inv.productId), inv, { merge: true });
     }
     await batch.commit();
   } catch (err) {
@@ -537,41 +575,64 @@ export async function saveUserInventoryBatch(userId: string, inventory: Inventor
   }
 }
 
-export async function saveUserStockLog(userId: string, log: StockLogEntry): Promise<void> {
+export async function saveUserStockLog(
+  arg1: string | StockLogEntry,
+  arg2?: StockLogEntry | string
+): Promise<void> {
   const db = getFirebaseDb();
   if (!db) return;
+  const workspaceId = typeof arg1 === 'string' ? arg1 : (typeof arg2 === 'string' ? arg2 : BUTCH_MASTERS_WORKSPACE_ID);
+  const log = typeof arg1 === 'object' ? (arg1 as StockLogEntry) : (typeof arg2 === 'object' ? (arg2 as StockLogEntry) : null);
+  if (!log) return;
   try {
-    await setDoc(doc(db, 'users', userId, 'stock_logs', log.id), log, { merge: true });
+    await setDoc(doc(db, 'users', workspaceId, 'stock_logs', log.id), log, { merge: true });
   } catch (err) {
     console.error(`Failed to save stock log ${log.id} to Firestore:`, err);
   }
 }
 
-export async function saveUserExpense(userId: string, expense: MiscellaneousExpense): Promise<void> {
+export async function saveUserExpense(
+  arg1: string | MiscellaneousExpense,
+  arg2?: MiscellaneousExpense | string
+): Promise<void> {
   const db = getFirebaseDb();
   if (!db) return;
+  const workspaceId = typeof arg1 === 'string' ? arg1 : (typeof arg2 === 'string' ? arg2 : BUTCH_MASTERS_WORKSPACE_ID);
+  const expense = typeof arg1 === 'object' ? (arg1 as MiscellaneousExpense) : (typeof arg2 === 'object' ? (arg2 as MiscellaneousExpense) : null);
+  if (!expense) return;
   try {
-    await setDoc(doc(db, 'users', userId, 'miscellaneous_expenses', expense.id), expense, { merge: true });
+    await setDoc(doc(db, 'users', workspaceId, 'miscellaneous_expenses', expense.id), expense, { merge: true });
   } catch (err) {
     console.error(`Failed to save expense ${expense.id} to Firestore:`, err);
   }
 }
 
-export async function deleteUserExpense(userId: string, expenseId: string): Promise<void> {
+export async function deleteUserExpense(
+  arg1: string,
+  arg2?: string
+): Promise<void> {
   const db = getFirebaseDb();
   if (!db) return;
+  const workspaceId = arg2 ? arg1 : BUTCH_MASTERS_WORKSPACE_ID;
+  const expenseId = arg2 ? arg2 : arg1;
   try {
-    await deleteDoc(doc(db, 'users', userId, 'miscellaneous_expenses', expenseId));
+    await deleteDoc(doc(db, 'users', workspaceId, 'miscellaneous_expenses', expenseId));
   } catch (err) {
     console.error(`Failed to delete expense ${expenseId} from Firestore:`, err);
   }
 }
 
-export async function saveUserSettings(userId: string, currency: CurrencyConfig): Promise<void> {
+export async function saveUserSettings(
+  arg1: string | CurrencyConfig,
+  arg2?: CurrencyConfig | string
+): Promise<void> {
   const db = getFirebaseDb();
   if (!db) return;
+  const workspaceId = typeof arg1 === 'string' ? arg1 : (typeof arg2 === 'string' ? arg2 : BUTCH_MASTERS_WORKSPACE_ID);
+  const currency = typeof arg1 === 'object' ? (arg1 as CurrencyConfig) : (typeof arg2 === 'object' ? (arg2 as CurrencyConfig) : null);
+  if (!currency) return;
   try {
-    await setDoc(doc(db, 'users', userId, 'settings', 'config'), {
+    await setDoc(doc(db, 'users', workspaceId, 'settings', 'config'), {
       businessName: 'Butch Master',
       currencyCode: currency.code,
       currencySymbol: currency.symbol,
@@ -628,14 +689,14 @@ export async function migrateLocalDataToFirestore(payload: MigrationPayload, tar
   }
 
   const currentAuth = getFirebaseAuth();
-  const userId = targetUserId || currentAuth?.currentUser?.uid;
+  const userId = targetUserId || currentAuth?.currentUser?.uid || BUTCH_MASTERS_WORKSPACE_ID;
 
   if (!userId) {
     return {
       success: false,
       counts: { costItems: 0, products: 0, orders: 0, inventory: 0, stockLogs: 0, miscellaneousExpenses: 0, settings: 0 },
       timestamp: new Date().toISOString(),
-      errorMessage: 'Authentication required. Please sign in to migrate your business records into your isolated account.',
+      errorMessage: 'Firestore workspace is not specified.',
     };
   }
 
@@ -798,7 +859,7 @@ export async function fetchAllDataFromFirestore(targetUserId?: string): Promise<
   if (!db) return null;
 
   const currentAuth = getFirebaseAuth();
-  const userId = targetUserId || currentAuth?.currentUser?.uid;
+  const userId = targetUserId || currentAuth?.currentUser?.uid || BUTCH_MASTERS_WORKSPACE_ID;
 
   if (!userId) return null;
 

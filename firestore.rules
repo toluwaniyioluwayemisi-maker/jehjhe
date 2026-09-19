@@ -2,27 +2,23 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    function isSignedIn() {
-      return request.auth != null;
-    }
-
-    function isOwner(userId) {
-      return isSignedIn() && request.auth.uid == userId;
-    }
-
-    // Isolated User Data Workspace: strict user isolation
+    // Butch Masters single-business data storage (no authentication required)
     match /users/{userId} {
-      allow read, write: if isOwner(userId);
-
-      // User's Subcollections (products, cost_items, orders, inventory, stock_logs, expenses, settings)
+      allow read, write: if true;
       match /{allSubcollections=**} {
-        allow read, write: if isOwner(userId);
+        allow read, write: if true;
       }
     }
 
-    // Top-Level Collections fallback
+    match /business/{businessId} {
+      allow read, write: if true;
+      match /{allSubcollections=**} {
+        allow read, write: if true;
+      }
+    }
+
     match /{document=**} {
-      allow read, write: if isSignedIn();
+      allow read, write: if true;
     }
   }
 }

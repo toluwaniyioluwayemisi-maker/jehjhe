@@ -23,9 +23,6 @@ import {
   updateCostItemWithHistory,
 } from './utils/storage';
 import {
-  getCurrentUser,
-  subscribeToAuthState,
-  logOutFirebase,
   loadUserDataFromFirestore,
   saveUserProduct,
   saveUserProductsBatch,
@@ -39,7 +36,6 @@ import {
   deleteUserExpense,
   saveUserSettings,
 } from './utils/firebase';
-import type { User } from 'firebase/auth';
 import {
   YoghurtProduct,
   CostItem,
@@ -50,7 +46,6 @@ import {
   MiscellaneousExpense,
 } from './types';
 import { Header } from './components/Header';
-import { AuthScreen } from './components/AuthScreen';
 import { ProductSelector } from './components/ProductSelector';
 import { CostSummaryCard } from './components/CostSummaryCard';
 import { IngredientList } from './components/IngredientList';
@@ -84,10 +79,7 @@ import {
 } from 'lucide-react';
 
 export default function App() {
-  const [currentUser, setCurrentUser] = useState<User | null>(() => getCurrentUser());
-  const [isAuthLoading, setIsAuthLoading] = useState<boolean>(true);
   const [isDataLoading, setIsDataLoading] = useState<boolean>(false);
-  const [showAuthScreen, setShowAuthScreen] = useState<boolean>(false);
 
   const [products, setProducts] = useState<YoghurtProduct[]>(() => getStoredProducts());
   const [costItems, setCostItems] = useState<CostItem[]>(() => getStoredCostItems());
@@ -127,48 +119,52 @@ export default function App() {
   const [isSellingPriceModalOpen, setIsSellingPriceModalOpen] = useState(false);
   const [sellingPriceTargetProductId, setSellingPriceTargetProductId] = useState<string | undefined>(undefined);
 
-  // Listen to Firebase Auth state changes
+  // Load Butch Masters business data from Firestore on application launch
   useEffect(() => {
-    const unsubscribe = subscribeToAuthState(async (user) => {
-      setCurrentUser(user);
-      setIsAuthLoading(false);
+    let isMounted = true;
 
-      if (user) {
-        setShowAuthScreen(false);
-        setIsDataLoading(true);
-        try {
-          const userData = await loadUserDataFromFirestore(user.uid);
-          setProducts(userData.products);
-          setCostItems(userData.costItems);
-          setOrders(userData.orders);
-          setInventory(userData.inventory);
-          setStockLogs(userData.stockLogs);
-          setExpenses(userData.miscellaneousExpenses);
-          setCurrency(userData.currency);
+    async function initBusinessWorkspace() {
+      setIsDataLoading(true);
+      try {
+        const businessData = await loadUserDataFromFirestore();
+        if (!isMounted) return;
 
-          // Update local storage backup
-          saveProducts(userData.products);
-          saveCostItems(userData.costItems);
-          saveOrders(userData.orders);
-          saveInventory(userData.inventory);
-          saveStockLogs(userData.stockLogs);
-          saveMiscellaneousExpenses(userData.miscellaneousExpenses);
-          saveCurrency(userData.currency.code);
+        setProducts(businessData.products);
+        setCostItems(businessData.costItems);
+        setOrders(businessData.orders);
+        setInventory(businessData.inventory);
+        setStockLogs(businessData.stockLogs);
+        setExpenses(businessData.miscellaneousExpenses);
+        setCurrency(businessData.currency);
 
-          if (userData.products.length > 0) {
-            setSelectedProductId((prev) =>
-              userData.products.some((p) => p.id === prev) ? prev : userData.products[0].id
-            );
-          }
-        } catch (err) {
-          console.error('Failed to load user workspace from Firestore:', err);
-        } finally {
+        // Update local storage backup
+        saveProducts(businessData.products);
+        saveCostItems(businessData.costItems);
+        saveOrders(businessData.orders);
+        saveInventory(businessData.inventory);
+        saveStockLogs(businessData.stockLogs);
+        saveMiscellaneousExpenses(businessData.miscellaneousExpenses);
+        saveCurrency(businessData.currency.code);
+
+        if (businessData.products.length > 0) {
+          setSelectedProductId((prev) =>
+            businessData.products.some((p) => p.id === prev) ? prev : businessData.products[0].id
+          );
+        }
+      } catch (err) {
+        console.error('Failed to load Butch Masters workspace from Firestore:', err);
+      } finally {
+        if (isMounted) {
           setIsDataLoading(false);
         }
       }
-    });
+    }
 
-    return () => unsubscribe();
+    initBusinessWorkspace();
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   // Storage Persistence Effects
@@ -199,9 +195,7 @@ export default function App() {
   const handleCurrencyChange = (newCurrency: CurrencyConfig) => {
     setCurrency(newCurrency);
     saveCurrency(newCurrency.code);
-    if (currentUser) {
-      saveUserSettings(currentUser.uid, newCurrency);
-    }
+    saveUserSettings(newCurrency);
   };
 
   const handleResetData = () => {
@@ -215,12 +209,10 @@ export default function App() {
     if (defaultData.products.length > 0) {
       setSelectedProductId(defaultData.products[0].id);
     }
-    if (currentUser) {
-      saveUserProductsBatch(currentUser.uid, defaultData.products);
-      saveUserInventoryBatch(currentUser.uid, defaultData.inventory);
-      for (const item of defaultData.costItems) {
-        saveUserCostItem(currentUser.uid, item);
-      }
+    saveUserProductsBatch(defaultData.products);
+    saveUserInventoryBatch(defaultData.inventory);
+    for (const item of defaultData.costItems) {
+      saveUserCostItem(item);
     }
   };
 
@@ -257,28 +249,26 @@ export default function App() {
       setSelectedProductId(data.products[0].id);
     }
 
-    if (currentUser) {
-      saveUserProductsBatch(currentUser.uid, data.products);
-      for (const c of data.costItems) {
-        saveUserCostItem(currentUser.uid, c);
+    saveUserProductsBatch(data.products);
+    for (const c of data.costItems) {
+      saveUserCostItem(c);
+    }
+    if (data.orders) {
+      for (const o of data.orders) {
+        saveUserOrder(o);
       }
-      if (data.orders) {
-        for (const o of data.orders) {
-          saveUserOrder(currentUser.uid, o);
-        }
+    }
+    if (data.inventory) {
+      saveUserInventoryBatch(data.inventory);
+    }
+    if (data.stockLogs) {
+      for (const l of data.stockLogs) {
+        saveUserStockLog(l);
       }
-      if (data.inventory) {
-        saveUserInventoryBatch(currentUser.uid, data.inventory);
-      }
-      if (data.stockLogs) {
-        for (const l of data.stockLogs) {
-          saveUserStockLog(currentUser.uid, l);
-        }
-      }
-      if (data.miscellaneousExpenses) {
-        for (const exp of data.miscellaneousExpenses) {
-          saveUserExpense(currentUser.uid, exp);
-        }
+    }
+    if (data.miscellaneousExpenses) {
+      for (const exp of data.miscellaneousExpenses) {
+        saveUserExpense(exp);
       }
     }
   };
@@ -291,9 +281,7 @@ export default function App() {
   const handleUpdateSellingPrices = (updatedProducts: YoghurtProduct[]) => {
     setProducts(updatedProducts);
     saveProducts(updatedProducts);
-    if (currentUser) {
-      saveUserProductsBatch(currentUser.uid, updatedProducts);
-    }
+    saveUserProductsBatch(updatedProducts);
   };
 
   const handleSaveProduct = (newProduct: YoghurtProduct) => {
@@ -305,9 +293,7 @@ export default function App() {
       return [...prev, newProduct];
     });
     setSelectedProductId(newProduct.id);
-    if (currentUser) {
-      saveUserProduct(currentUser.uid, newProduct);
-    }
+    saveUserProduct(newProduct);
   };
 
   const handleQuickLoadStandardProducts = (standardProducts: YoghurtProduct[]) => {
@@ -316,9 +302,7 @@ export default function App() {
     if (standardProducts.length > 0) {
       setSelectedProductId(standardProducts[0].id);
     }
-    if (currentUser) {
-      saveUserProductsBatch(currentUser.uid, standardProducts);
-    }
+    saveUserProductsBatch(standardProducts);
   };
 
   const currentProduct = products.find((p) => p.id === selectedProductId) || products[0];
@@ -369,8 +353,8 @@ export default function App() {
       setCostItems((prev) => [savedItem, ...prev]);
     }
 
-    if (currentUser && savedItem!) {
-      saveUserCostItem(currentUser.uid, savedItem!);
+    if (savedItem!) {
+      saveUserCostItem(savedItem!);
     }
   };
 
@@ -385,16 +369,14 @@ export default function App() {
         return item;
       })
     );
-    if (currentUser && updatedItem) {
-      saveUserCostItem(currentUser.uid, updatedItem);
+    if (updatedItem) {
+      saveUserCostItem(updatedItem);
     }
   };
 
   const handleDeleteCostItem = (itemId: string) => {
     setCostItems((prev) => prev.filter((i) => i.id !== itemId));
-    if (currentUser) {
-      deleteUserCostItem(currentUser.uid, itemId);
-    }
+    deleteUserCostItem(itemId);
   };
 
   const handleOpenEditCost = (item: CostItem) => {
@@ -423,9 +405,7 @@ export default function App() {
       return [orderToSave, ...prev];
     });
 
-    if (currentUser) {
-      saveUserOrder(currentUser.uid, orderToSave);
-    }
+    saveUserOrder(orderToSave);
 
     // Optionally deduct stock quantities from inventory on-hand
     if (deductStock) {
@@ -458,20 +438,16 @@ export default function App() {
       }));
       setStockLogs((prev) => [...newLogs, ...prev]);
 
-      if (currentUser) {
-        saveUserInventoryBatch(currentUser.uid, updatedInventoryList);
-        for (const log of newLogs) {
-          saveUserStockLog(currentUser.uid, log);
-        }
+      saveUserInventoryBatch(updatedInventoryList);
+      for (const log of newLogs) {
+        saveUserStockLog(log);
       }
     }
   };
 
   const handleDeleteOrder = (orderId: string) => {
     setOrders((prev) => prev.filter((o) => o.id !== orderId));
-    if (currentUser) {
-      deleteUserOrder(currentUser.uid, orderId);
-    }
+    deleteUserOrder(orderId);
   };
 
   // ==========================================================================
@@ -502,10 +478,8 @@ export default function App() {
       return result;
     });
 
-    if (currentUser) {
-      saveUserStockLog(currentUser.uid, newLog);
-      saveUserInventoryBatch(currentUser.uid, updatedInventoryList);
-    }
+    saveUserStockLog(newLog);
+    saveUserInventoryBatch(updatedInventoryList);
   };
 
   const handleDeleteStockLog = (logId: string) => {
@@ -542,11 +516,9 @@ export default function App() {
       setStockLogs((prev) => [adjustmentLog!, ...prev]);
     }
 
-    if (currentUser) {
-      saveUserInventoryBatch(currentUser.uid, updatedInventoryList);
-      if (adjustmentLog) {
-        saveUserStockLog(currentUser.uid, adjustmentLog);
-      }
+    saveUserInventoryBatch(updatedInventoryList);
+    if (adjustmentLog) {
+      saveUserStockLog(adjustmentLog);
     }
   };
 
@@ -564,50 +536,13 @@ export default function App() {
       return [expenseToSave, ...prev];
     });
 
-    if (currentUser) {
-      saveUserExpense(currentUser.uid, expenseToSave);
-    }
+    saveUserExpense(expenseToSave);
   };
 
   const handleDeleteExpense = (expenseId: string) => {
     setExpenses((prev) => prev.filter((e) => e.id !== expenseId));
-    if (currentUser) {
-      deleteUserExpense(currentUser.uid, expenseId);
-    }
+    deleteUserExpense(expenseId);
   };
-
-  const handleSignOut = async () => {
-    await logOutFirebase();
-    setCurrentUser(null);
-  };
-
-  // 1. Initial Authentication Loading Screen
-  if (isAuthLoading) {
-    return (
-      <div className="min-h-screen bg-[#F7F4EE] flex flex-col items-center justify-center p-6 text-[#1C211E]">
-        <div className="w-16 h-16 rounded-2xl bg-[#45634D] text-[#F9F7F2] flex items-center justify-center shadow-md mb-4 animate-pulse">
-          <Milk className="w-9 h-9" />
-        </div>
-        <h2 className="text-xl font-bold tracking-tight font-display text-[#1C211E] mb-1">
-          Butch Master
-        </h2>
-        <div className="flex items-center gap-2 text-xs font-semibold text-[#55635B] mt-2">
-          <Loader2 className="w-4 h-4 animate-spin text-[#45634D]" />
-          <span>Connecting to Butch Master Cloud...</span>
-        </div>
-      </div>
-    );
-  }
-
-  // 2. Authentication Screen (when user explicitly requests Sign In / Sign Up)
-  if (showAuthScreen && !currentUser) {
-    return (
-      <AuthScreen
-        onExploreDemo={() => setShowAuthScreen(false)}
-        onAuthSuccess={() => setShowAuthScreen(false)}
-      />
-    );
-  }
 
   return (
     <div className="min-h-screen bg-[#F9F7F2] text-[#1C211E] pb-24 font-sans antialiased">
@@ -624,9 +559,6 @@ export default function App() {
         miscellaneousExpenses={expenses}
         onImportData={handleImportData}
         onOpenSellingPrices={() => handleOpenSellingPrices()}
-        currentUser={currentUser}
-        onSignOut={handleSignOut}
-        onOpenSignIn={() => setShowAuthScreen(true)}
       />
 
       {/* Cloud Synchronizing Indicator Bar */}

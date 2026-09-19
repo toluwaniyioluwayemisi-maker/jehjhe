@@ -234,20 +234,20 @@ export function resetToDefaultData(): {
   try {
     localStorage.setItem(STORAGE_KEYS.PRODUCTS, JSON.stringify(INITIAL_PRODUCTS));
     localStorage.setItem(STORAGE_KEYS.COST_ITEMS, JSON.stringify(INITIAL_INGREDIENTS));
-    localStorage.setItem(STORAGE_KEYS.ORDERS, JSON.stringify(INITIAL_ORDERS));
+    localStorage.setItem(STORAGE_KEYS.ORDERS, JSON.stringify([]));
     localStorage.setItem(STORAGE_KEYS.INVENTORY, JSON.stringify(INITIAL_INVENTORY));
-    localStorage.setItem(STORAGE_KEYS.STOCK_LOGS, JSON.stringify(INITIAL_STOCK_LOGS));
-    localStorage.setItem(STORAGE_KEYS.MISC_EXPENSES, JSON.stringify(INITIAL_MISCELLANEOUS_EXPENSES));
+    localStorage.setItem(STORAGE_KEYS.STOCK_LOGS, JSON.stringify([]));
+    localStorage.setItem(STORAGE_KEYS.MISC_EXPENSES, JSON.stringify([]));
   } catch (e) {
     console.error('Error resetting data:', e);
   }
   return {
     products: INITIAL_PRODUCTS,
     costItems: INITIAL_INGREDIENTS,
-    orders: INITIAL_ORDERS,
+    orders: [],
     inventory: INITIAL_INVENTORY,
-    stockLogs: INITIAL_STOCK_LOGS,
-    miscellaneousExpenses: INITIAL_MISCELLANEOUS_EXPENSES,
+    stockLogs: [],
+    miscellaneousExpenses: [],
   };
 }
 
