@@ -122,24 +122,24 @@ export const Header: React.FC<HeaderProps> = ({
   };
 
   return (
-    <header className="sticky top-0 z-30 bg-[#1E2621] text-[#F9F7F2] shadow-sm border-b border-[#2A342E]">
+    <header className="sticky top-0 z-30 bg-gradient-to-r from-[#06241D] via-[#09352A] to-[#0A3D30] text-white shadow-sm border-b border-[#144E3F]">
       <div className="max-w-4xl mx-auto px-4 py-3 sm:py-3.5">
         <div className="flex items-center justify-between">
           {/* Brand Identity */}
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-[#45634D] flex items-center justify-center shadow-inner text-[#F9F7F2] font-bold ring-1 ring-[#5E8367]">
-              <Milk className="w-5 h-5 text-[#F9F7F2]" />
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#10B981] to-[#059669] flex items-center justify-center shadow-md text-white font-bold ring-2 ring-[#34D399]/30">
+              <Milk className="w-5 h-5 text-white" />
             </div>
             <div>
               <div className="flex items-center gap-2">
                 <h1 className="text-lg sm:text-xl font-bold tracking-tight font-display text-white">
                   Butch Master
                 </h1>
-                <span className="text-[10px] uppercase font-bold px-2 py-0.5 bg-[#2E3C32] text-[#A6C5AD] border border-[#3D4E42] rounded-md tracking-wider">
+                <span className="text-[10px] uppercase font-bold px-2 py-0.5 bg-[#0C382C] text-[#6EE7B7] border border-[#165443] rounded-md tracking-wider">
                   Yoghurt & Pastries
                 </span>
               </div>
-              <p className="text-xs text-[#A1B0A6] font-medium">
+              <p className="text-xs text-[#A7F3D0]/90 font-medium">
                 Cost & Ingredients Management
               </p>
             </div>
@@ -152,10 +152,10 @@ export const Header: React.FC<HeaderProps> = ({
               <button
                 id="header-selling-prices-btn"
                 onClick={onOpenSellingPrices}
-                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-[#34483B] hover:bg-[#405A49] text-[#E8F3EB] hover:text-white text-xs font-semibold border border-[#486852] transition-colors cursor-pointer shadow-2xs"
+                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-[#0F4738] hover:bg-[#155A48] text-[#ECFDF5] hover:text-white text-xs font-semibold border border-[#1C6652] transition-colors cursor-pointer shadow-xs"
                 title="Manage and edit yoghurt bottle selling prices"
               >
-                <Tag className="w-3.5 h-3.5 text-[#97D4A2]" />
+                <Tag className="w-3.5 h-3.5 text-[#34D399]" />
                 <span className="hidden sm:inline">Selling Prices</span>
               </button>
             )}
@@ -164,13 +164,13 @@ export const Header: React.FC<HeaderProps> = ({
             <button
               id="header-cloud-sync-btn"
               onClick={() => setShowCloudSync(true)}
-              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-[#2B362F] hover:bg-[#344239] text-[#CBD8CE] text-xs font-semibold border border-[#3B4A3F] transition-colors cursor-pointer"
+              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-[#082E24] hover:bg-[#0E3E31] text-[#D1FAE5] text-xs font-semibold border border-[#165443] transition-colors cursor-pointer"
               title="Cloud Persistence & Synchronization Status"
             >
               {firebaseConfigured ? (
-                <Cloud className="w-3.5 h-3.5 text-[#87B090]" />
+                <Cloud className="w-3.5 h-3.5 text-[#34D399]" />
               ) : (
-                <CloudOff className="w-3.5 h-3.5 text-[#D99A26]" />
+                <CloudOff className="w-3.5 h-3.5 text-[#FBBF24]" />
               )}
               <span className="hidden sm:inline">
                 {firebaseConfigured ? 'Cloud Sync' : 'Local Storage'}
@@ -187,39 +187,39 @@ export const Header: React.FC<HeaderProps> = ({
                   const curr = DEFAULT_CURRENCIES.find((c) => c.code === e.target.value);
                   if (curr) onCurrencyChange(curr);
                 }}
-                className="bg-[#2B362F] hover:bg-[#344239] text-[#E6EFE8] text-xs font-semibold px-2.5 py-1.5 rounded-lg border border-[#3B4A3F] focus:outline-none focus:ring-2 focus:ring-[#5C8366] appearance-none pr-7 cursor-pointer transition-colors"
+                className="bg-[#082E24] hover:bg-[#0E3E31] text-white text-xs font-semibold px-2.5 py-1.5 rounded-lg border border-[#165443] focus:outline-none focus:ring-2 focus:ring-[#10B981] appearance-none pr-7 cursor-pointer transition-colors"
               >
                 {DEFAULT_CURRENCIES.map((curr) => (
-                  <option key={curr.code} value={curr.code} className="bg-[#1E2621] text-white">
+                  <option key={curr.code} value={curr.code} className="bg-[#06241D] text-white">
                     {curr.symbol} {curr.code}
                   </option>
                 ))}
               </select>
-              <ChevronDown className="w-3.5 h-3.5 text-[#A1B0A6] absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none" />
+              <ChevronDown className="w-3.5 h-3.5 text-[#A7F3D0] absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none" />
             </div>
 
             {/* Settings Toggle */}
             <button
               id="header-settings-toggle"
               onClick={() => setShowSettings(!showSettings)}
-              className="p-2 rounded-lg bg-[#2B362F] hover:bg-[#344239] text-[#CBD8CE] border border-[#3B4A3F] transition-colors cursor-pointer"
+              className="p-2 rounded-lg bg-[#082E24] hover:bg-[#0E3E31] text-[#D1FAE5] border border-[#165443] transition-colors cursor-pointer"
               title="Backup & Settings"
             >
-              <RefreshCw className={`w-4 h-4 ${showSettings ? 'text-[#87B090] rotate-180' : ''} transition-transform duration-300`} />
+              <RefreshCw className={`w-4 h-4 ${showSettings ? 'text-[#34D399] rotate-180' : ''} transition-transform duration-300`} />
             </button>
 
             {/* Cloud Storage Status Indicator */}
-            <div className="flex items-center gap-1.5 pl-1.5 border-l border-[#2E3C32]">
+            <div className="flex items-center gap-1.5 pl-1.5 border-l border-[#165443]">
               <button
                 type="button"
                 id="header-cloud-status-badge"
                 onClick={() => setShowCloudSync(true)}
-                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-[#2B362F] hover:bg-[#344239] text-[#CBD8CE] text-xs font-semibold border border-[#3B4A3F] transition cursor-pointer"
+                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-[#082E24] hover:bg-[#0E3E31] text-[#D1FAE5] text-xs font-semibold border border-[#165443] transition cursor-pointer"
                 title="Firestore Cloud Storage Connected"
               >
-                <Cloud className="w-3.5 h-3.5 text-[#87B090]" />
-                <span className="hidden sm:inline text-[11px] text-[#E6EFE8]">Cloud Active</span>
-                <span className="w-1.5 h-1.5 rounded-full bg-[#87B090]"></span>
+                <Cloud className="w-3.5 h-3.5 text-[#34D399]" />
+                <span className="hidden sm:inline text-[11px] text-white">Cloud Active</span>
+                <span className="w-1.5 h-1.5 rounded-full bg-[#34D399] animate-pulse"></span>
               </button>
             </div>
           </div>
@@ -227,7 +227,7 @@ export const Header: React.FC<HeaderProps> = ({
 
         {/* Settings Drawer */}
         {showSettings && (
-          <div className="mt-3 pt-3 border-t border-[#2E3C32] grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+          <div className="mt-3 pt-3 border-t border-[#144E3F] grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
             {/* Selling Prices Drawer Button */}
             {onOpenSellingPrices && (
               <button
@@ -236,13 +236,13 @@ export const Header: React.FC<HeaderProps> = ({
                   onOpenSellingPrices();
                   setShowSettings(false);
                 }}
-                className="sm:col-span-2 flex items-center justify-between p-2.5 rounded-lg bg-[#253229] hover:bg-[#2C3B30] text-[#D8E6DB] border border-[#3A4E40] transition font-medium cursor-pointer"
+                className="sm:col-span-2 flex items-center justify-between p-2.5 rounded-lg bg-[#0A352A] hover:bg-[#0F4436] text-[#E6F4EE] border border-[#185544] transition font-medium cursor-pointer"
               >
                 <div className="flex items-center gap-2">
-                  <Tag className="w-3.5 h-3.5 text-[#87B090]" />
+                  <Tag className="w-3.5 h-3.5 text-[#34D399]" />
                   <span>Configure Product Selling Prices (30cl, 50cl, 500ml)</span>
                 </div>
-                <span className="text-[10px] px-2 py-0.5 rounded font-bold uppercase tracking-wider bg-[#3A6B48] text-white">
+                <span className="text-[10px] px-2 py-0.5 rounded font-bold uppercase tracking-wider bg-[#059669] text-white">
                   Edit Prices
                 </span>
               </button>
@@ -255,14 +255,14 @@ export const Header: React.FC<HeaderProps> = ({
                 setShowCloudSync(true);
                 setShowSettings(false);
               }}
-              className="sm:col-span-2 flex items-center justify-between p-2.5 rounded-lg bg-[#253229] hover:bg-[#2C3B30] text-[#D8E6DB] border border-[#3A4E40] transition font-medium cursor-pointer"
+              className="sm:col-span-2 flex items-center justify-between p-2.5 rounded-lg bg-[#0A352A] hover:bg-[#0F4436] text-[#E6F4EE] border border-[#185544] transition font-medium cursor-pointer"
             >
               <div className="flex items-center gap-2">
-                <Database className="w-3.5 h-3.5 text-[#87B090]" />
+                <Database className="w-3.5 h-3.5 text-[#34D399]" />
                 <span>Cloud Persistence & Firestore Sync</span>
               </div>
               <span className={`text-[10px] px-2 py-0.5 rounded font-bold uppercase tracking-wider ${
-                firebaseConfigured ? 'bg-[#3A6B48] text-white' : 'bg-[#D99A26] text-white'
+                firebaseConfigured ? 'bg-[#059669] text-white' : 'bg-[#D97706] text-white'
               }`}>
                 {firebaseConfigured ? 'Connected' : 'Local Storage Only'}
               </span>
@@ -271,17 +271,17 @@ export const Header: React.FC<HeaderProps> = ({
             <button
               id="export-backup-btn"
               onClick={handleExport}
-              className="flex items-center justify-center gap-2 p-2.5 rounded-lg bg-[#2B362F] hover:bg-[#344239] text-[#E6EFE8] border border-[#3B4A3F] transition font-medium cursor-pointer"
+              className="flex items-center justify-center gap-2 p-2.5 rounded-lg bg-[#082E24] hover:bg-[#0E3E31] text-white border border-[#165443] transition font-medium cursor-pointer"
             >
-              <Download className="w-3.5 h-3.5 text-[#87B090]" />
+              <Download className="w-3.5 h-3.5 text-[#34D399]" />
               Export Cost Backup (JSON)
             </button>
 
             <label
               id="import-backup-label"
-              className="flex items-center justify-center gap-2 p-2.5 rounded-lg bg-[#2B362F] hover:bg-[#344239] text-[#E6EFE8] border border-[#3B4A3F] cursor-pointer transition font-medium text-center"
+              className="flex items-center justify-center gap-2 p-2.5 rounded-lg bg-[#082E24] hover:bg-[#0E3E31] text-white border border-[#165443] cursor-pointer transition font-medium text-center"
             >
-              <Upload className="w-3.5 h-3.5 text-[#87B090]" />
+              <Upload className="w-3.5 h-3.5 text-[#34D399]" />
               Import / Restore Backup
               <input
                 type="file"
@@ -296,13 +296,13 @@ export const Header: React.FC<HeaderProps> = ({
                 <button
                   id="reset-sample-data-btn"
                   onClick={() => setShowResetConfirm(true)}
-                  className="text-[#96A89C] hover:text-[#E28383] transition text-[11px] underline cursor-pointer"
+                  className="text-[#99F6E4]/80 hover:text-[#FCA5A5] transition text-[11px] underline cursor-pointer"
                 >
                   Reset all costs to Butch Master standard defaults
                 </button>
               ) : (
-                <div className="flex items-center gap-2 bg-[#3A1F1F] border border-[#5E2B2B] p-2 rounded-lg w-full justify-between">
-                  <span className="text-[#F2B0B0] text-[11px]">Are you sure you want to reset all unit prices?</span>
+                <div className="flex items-center gap-2 bg-[#450A0A] border border-[#7F1D1D] p-2 rounded-lg w-full justify-between">
+                  <span className="text-[#FECACA] text-[11px]">Are you sure you want to reset all unit prices?</span>
                   <div className="flex items-center gap-2">
                     <button
                       id="confirm-reset-btn"
@@ -312,14 +312,14 @@ export const Header: React.FC<HeaderProps> = ({
                         setShowSettings(false);
                         showToast('Reset to default standard costs');
                       }}
-                      className="px-2.5 py-1 bg-[#A83232] hover:bg-[#C23C3C] text-white rounded text-[11px] font-semibold cursor-pointer"
+                      className="px-2.5 py-1 bg-[#DC2626] hover:bg-[#EF4444] text-white rounded text-[11px] font-semibold cursor-pointer"
                     >
                       Yes, Reset
                     </button>
                     <button
                       id="cancel-reset-btn"
                       onClick={() => setShowResetConfirm(false)}
-                      className="px-2 py-1 bg-[#2B362F] hover:bg-[#344239] text-[#CBD8CE] rounded text-[11px] cursor-pointer"
+                      className="px-2 py-1 bg-[#082E24] hover:bg-[#0E3E31] text-[#D1FAE5] rounded text-[11px] cursor-pointer"
                     >
                       Cancel
                     </button>
@@ -332,9 +332,9 @@ export const Header: React.FC<HeaderProps> = ({
 
         {/* Toast Notification */}
         {notification && (
-          <div className="mt-2 p-2 bg-[#2E3C32] border border-[#4E6754] text-[#D3E8D7] rounded-lg text-xs flex items-center gap-2 animate-fadeIn">
-            <Check className="w-3.5 h-3.5 text-[#87B090] flex-shrink-0" />
-            <span>{notification}</span>
+          <div className="mt-2 p-2.5 bg-[#064E3B] border border-[#059669] text-[#D1FAE5] rounded-xl text-xs flex items-center gap-2 animate-fadeIn shadow-md">
+            <Check className="w-3.5 h-3.5 text-[#34D399] flex-shrink-0" />
+            <span className="font-semibold">{notification}</span>
           </div>
         )}
 

@@ -133,23 +133,23 @@ export const AddProductModal: React.FC<AddProductModalProps> = ({
     >
       <div
         id="add-product-modal-content"
-        className="bg-white rounded-2xl max-w-lg w-full p-5 sm:p-6 shadow-xl border border-[#D9D3C7] space-y-5 animate-in fade-in duration-200"
+        className="bg-white rounded-2xl max-w-lg w-full p-5 sm:p-6 shadow-2xl border border-[#E2E8F0] space-y-5 animate-in fade-in duration-200"
       >
         {/* Modal Header */}
-        <div className="flex items-start justify-between gap-3 pb-3 border-b border-[#EAE4D8]">
+        <div className="flex items-start justify-between gap-3 pb-3 border-b border-[#E2E8F0]">
           <div className="flex items-center gap-2.5">
             <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
               category === 'electricity'
                 ? 'bg-amber-100 text-amber-800'
-                : 'bg-[#EEF4EF] text-[#34513B]'
+                : 'bg-[#ECFDF5] text-[#059669]'
             }`}>
               {category === 'electricity' ? <Zap className="w-5 h-5" /> : <Package className="w-5 h-5" />}
             </div>
             <div>
-              <h3 className="text-base sm:text-lg font-bold text-[#1C211E] font-display">
+              <h3 className="text-base sm:text-lg font-bold text-[#0F172A] font-display">
                 {editingProduct ? 'Edit Service / Product' : 'Add New Service / Product'}
               </h3>
-              <p className="text-xs text-[#697A6F]">
+              <p className="text-xs text-[#64748B]">
                 {editingProduct
                   ? 'Update category, pricing and configuration for this service or product.'
                   : 'Configure services and product lines (Yoghurt, Pastries, or Electricity) to track costs and profits.'}
@@ -160,7 +160,7 @@ export const AddProductModal: React.FC<AddProductModalProps> = ({
             id="close-add-product-modal-btn"
             type="button"
             onClick={onClose}
-            className="p-1.5 text-[#697A6F] hover:text-[#1C211E] hover:bg-[#F4EFE6] rounded-xl transition cursor-pointer"
+            className="p-1.5 text-[#64748B] hover:text-[#0F172A] hover:bg-[#F1F5F9] rounded-xl transition cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
@@ -206,13 +206,13 @@ export const AddProductModal: React.FC<AddProductModalProps> = ({
 
         {/* Quick Setup Option if standard products not loaded */}
         {!editingProduct && existingProductIds.length === 0 && onQuickLoadStandardProducts && (
-          <div className="p-3.5 bg-[#FAF6F0] rounded-xl border border-[#E6DAC8] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="p-3.5 bg-[#F8FAFC] rounded-xl border border-[#E2E8F0] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
-              <div className="flex items-center gap-1.5 text-xs font-bold text-[#8C4E20]">
-                <Sparkles className="w-3.5 h-3.5 text-[#9A5B2D]" />
+              <div className="flex items-center gap-1.5 text-xs font-bold text-[#059669]">
+                <Sparkles className="w-3.5 h-3.5 text-[#10B981]" />
                 <span>Quick Setup: 3 Standard Butch Master Sizes</span>
               </div>
-              <p className="text-[11px] text-[#7A6451] mt-0.5">
+              <p className="text-[11px] text-[#64748B] mt-0.5">
                 Load 30cl, 50cl Normal Yoghurt and 500ml Greek Yoghurt with preset recommended selling prices.
               </p>
             </div>
@@ -220,7 +220,7 @@ export const AddProductModal: React.FC<AddProductModalProps> = ({
               type="button"
               id="btn-quick-setup-standard-products"
               onClick={handleQuickLoad}
-              className="px-3 py-2 bg-[#2D4534] hover:bg-[#223528] text-white rounded-xl text-xs font-bold whitespace-nowrap transition cursor-pointer shadow-2xs"
+              className="px-3 py-2 bg-[#059669] hover:bg-[#047857] text-white rounded-xl text-xs font-bold whitespace-nowrap transition cursor-pointer shadow-xs"
             >
               Add 3 Standard Sizes
             </button>
@@ -237,7 +237,7 @@ export const AddProductModal: React.FC<AddProductModalProps> = ({
           {/* Category & Product Type */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label className="block text-[#47574B] font-bold uppercase tracking-wider text-[10px] mb-1">
+              <label className="block text-[#475569] font-bold uppercase tracking-wider text-[10px] mb-1">
                 Service / Product Category *
               </label>
               <select
@@ -251,7 +251,7 @@ export const AddProductModal: React.FC<AddProductModalProps> = ({
                     if (!size) setSize('Monthly Run / Billing');
                   }
                 }}
-                className="w-full px-3 py-2 rounded-xl border border-[#D9D3C7] bg-white text-[#1C211E] font-medium focus:ring-2 focus:ring-[#45634D] focus:outline-hidden"
+                className="w-full px-3 py-2 rounded-xl border border-[#CBD5E1] bg-white text-[#0F172A] font-medium focus:ring-2 focus:ring-[#059669] focus:outline-hidden"
               >
                 <option value="yoghurt">🥛 Yoghurt Line</option>
                 <option value="pastries">🥐 Pastries / Bakery Line</option>
@@ -260,14 +260,14 @@ export const AddProductModal: React.FC<AddProductModalProps> = ({
             </div>
 
             <div>
-              <label className="block text-[#47574B] font-bold uppercase tracking-wider text-[10px] mb-1">
+              <label className="block text-[#475569] font-bold uppercase tracking-wider text-[10px] mb-1">
                 Product / Service Type
               </label>
               <select
                 id="input-product-type"
                 value={productType}
                 onChange={(e) => setProductType(e.target.value)}
-                className="w-full px-3 py-2 rounded-xl border border-[#D9D3C7] bg-white text-[#1C211E] font-medium focus:ring-2 focus:ring-[#45634D] focus:outline-hidden"
+                className="w-full px-3 py-2 rounded-xl border border-[#CBD5E1] bg-white text-[#0F172A] font-medium focus:ring-2 focus:ring-[#059669] focus:outline-hidden"
               >
                 {category === 'electricity' ? (
                   <>
@@ -293,7 +293,7 @@ export const AddProductModal: React.FC<AddProductModalProps> = ({
           {/* Size / Billing Unit & Selling Price */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label className="block text-[#47574B] font-bold uppercase tracking-wider text-[10px] mb-1">
+              <label className="block text-[#475569] font-bold uppercase tracking-wider text-[10px] mb-1">
                 {category === 'electricity' ? 'Billing Unit / Service Format *' : 'Size / Packaging Format *'}
               </label>
               <input
@@ -305,17 +305,17 @@ export const AddProductModal: React.FC<AddProductModalProps> = ({
                   setSize(e.target.value);
                   setError(null);
                 }}
-                className="w-full px-3 py-2 rounded-xl border border-[#D9D3C7] bg-white text-[#1C211E] font-medium focus:ring-2 focus:ring-[#45634D] focus:outline-hidden"
+                className="w-full px-3 py-2 rounded-xl border border-[#CBD5E1] bg-white text-[#0F172A] font-medium focus:ring-2 focus:ring-[#059669] focus:outline-hidden"
                 required
               />
             </div>
 
             <div>
-              <label className="block text-[#47574B] font-bold uppercase tracking-wider text-[10px] mb-1">
+              <label className="block text-[#475569] font-bold uppercase tracking-wider text-[10px] mb-1">
                 Selling Price ({currency.symbol})
               </label>
               <div className="relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 font-bold text-[#697A6F]">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 font-bold text-[#64748B]">
                   {currency.symbol}
                 </span>
                 <input
@@ -326,7 +326,7 @@ export const AddProductModal: React.FC<AddProductModalProps> = ({
                   placeholder="0.00"
                   value={sellingPrice}
                   onChange={(e) => setSellingPrice(e.target.value)}
-                  className="w-full pl-8 pr-3 py-2 rounded-xl border border-[#D9D3C7] bg-white text-[#1C211E] font-medium focus:ring-2 focus:ring-[#45634D] focus:outline-hidden"
+                  className="w-full pl-8 pr-3 py-2 rounded-xl border border-[#CBD5E1] bg-white text-[#0F172A] font-medium focus:ring-2 focus:ring-[#059669] focus:outline-hidden"
                 />
               </div>
             </div>
@@ -334,7 +334,7 @@ export const AddProductModal: React.FC<AddProductModalProps> = ({
 
           {/* Product Name Display / Override */}
           <div>
-            <label className="block text-[#47574B] font-bold uppercase tracking-wider text-[10px] mb-1">
+            <label className="block text-[#475569] font-bold uppercase tracking-wider text-[10px] mb-1">
               Display Name (Optional Customization)
             </label>
             <input
@@ -343,17 +343,17 @@ export const AddProductModal: React.FC<AddProductModalProps> = ({
               placeholder={resolvedName}
               value={customName}
               onChange={(e) => setCustomName(e.target.value)}
-              className="w-full px-3 py-2 rounded-xl border border-[#D9D3C7] bg-white text-[#1C211E] font-medium focus:ring-2 focus:ring-[#45634D] focus:outline-hidden"
+              className="w-full px-3 py-2 rounded-xl border border-[#CBD5E1] bg-white text-[#0F172A] font-medium focus:ring-2 focus:ring-[#059669] focus:outline-hidden"
             />
-            <p className="text-[11px] text-[#697A6F] mt-1">
+            <p className="text-[11px] text-[#64748B] mt-1">
               Will display in invoices and records as:{' '}
-              <span className="font-bold text-[#1C211E]">{resolvedName}</span>
+              <span className="font-bold text-[#0F172A]">{resolvedName}</span>
             </p>
           </div>
 
           {/* Description */}
           <div>
-            <label className="block text-[#47574B] font-bold uppercase tracking-wider text-[10px] mb-1">
+            <label className="block text-[#475569] font-bold uppercase tracking-wider text-[10px] mb-1">
               Notes / Description (Optional)
             </label>
             <input
@@ -362,17 +362,17 @@ export const AddProductModal: React.FC<AddProductModalProps> = ({
               placeholder={category === 'electricity' ? 'e.g. 3-phase grid tariff, generator diesel share and maintenance' : 'e.g. Standard batch packaging with tamper-evident seal'}
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              className="w-full px-3 py-2 rounded-xl border border-[#D9D3C7] bg-white text-[#1C211E] font-medium focus:ring-2 focus:ring-[#45634D] focus:outline-hidden"
+              className="w-full px-3 py-2 rounded-xl border border-[#CBD5E1] bg-white text-[#0F172A] font-medium focus:ring-2 focus:ring-[#059669] focus:outline-hidden"
             />
           </div>
 
           {/* Modal Actions */}
-          <div className="pt-3 border-t border-[#EAE4D8] flex items-center justify-end gap-2.5">
+          <div className="pt-3 border-t border-[#E2E8F0] flex items-center justify-end gap-2.5">
             <button
               type="button"
               id="cancel-add-product-btn"
               onClick={onClose}
-              className="px-4 py-2 rounded-xl bg-[#F4EFE6] hover:bg-[#EAE2D5] text-[#55635B] font-bold transition cursor-pointer"
+              className="px-4 py-2 rounded-xl bg-[#F1F5F9] hover:bg-[#E2E8F0] text-[#475569] font-bold transition cursor-pointer"
             >
               Cancel
             </button>
@@ -382,7 +382,7 @@ export const AddProductModal: React.FC<AddProductModalProps> = ({
               className={`px-5 py-2 rounded-xl text-white font-bold transition cursor-pointer shadow-xs flex items-center gap-1.5 ${
                 category === 'electricity'
                   ? 'bg-amber-600 hover:bg-amber-700'
-                  : 'bg-[#45634D] hover:bg-[#38533F]'
+                  : 'bg-[#059669] hover:bg-[#047857]'
               }`}
             >
               {editingProduct ? <Save className="w-4 h-4" /> : <Plus className="w-4 h-4" />}

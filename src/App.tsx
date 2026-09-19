@@ -563,8 +563,8 @@ export default function App() {
 
       {/* Cloud Synchronizing Indicator Bar */}
       {isDataLoading && (
-        <div className="bg-[#45634D] text-[#E8F3EB] px-4 py-1.5 text-xs flex items-center justify-center gap-2 shadow-inner">
-          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+        <div className="bg-[#064E3B] text-[#D1FAE5] px-4 py-1.5 text-xs flex items-center justify-center gap-2 shadow-inner font-medium">
+          <Loader2 className="w-3.5 h-3.5 animate-spin text-[#34D399]" />
           <span>Syncing workspace with Firestore cloud records...</span>
         </div>
       )}
@@ -575,7 +575,7 @@ export default function App() {
         <nav
           id="main-app-nav-bar"
           aria-label="Application Modules"
-          className="bg-[#EAE5DB] p-1.5 rounded-2xl border border-[#D9D3C7] shadow-2xs flex items-center gap-1 overflow-x-auto"
+          className="bg-[#E2E8F0]/80 p-1.5 rounded-2xl border border-[#CBD5E1] shadow-2xs flex items-center gap-1 overflow-x-auto backdrop-blur-xs"
         >
           <button
             id="nav-tab-dashboard"
@@ -585,11 +585,11 @@ export default function App() {
             }}
             className={`flex-1 min-w-[110px] flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl text-xs font-bold transition cursor-pointer ${
               mainTab === 'dashboard' && !isDemoModeActive
-                ? 'bg-white text-[#1C211E] shadow-xs'
-                : 'text-[#55635B] hover:text-[#1C211E]'
+                ? 'bg-white text-[#0F172A] shadow-xs border border-[#E2E8F0]'
+                : 'text-[#64748B] hover:text-[#0F172A] hover:bg-white/50'
             }`}
           >
-            <LayoutDashboard className="w-4 h-4 text-[#45634D]" />
+            <LayoutDashboard className={`w-4 h-4 ${mainTab === 'dashboard' && !isDemoModeActive ? 'text-[#059669]' : 'text-[#64748B]'}`} />
             <span>Dashboard</span>
           </button>
 
@@ -601,11 +601,11 @@ export default function App() {
             }}
             className={`flex-1 min-w-[120px] flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl text-xs font-bold transition cursor-pointer ${
               mainTab === 'costs' && !isDemoModeActive
-                ? 'bg-white text-[#1C211E] shadow-xs'
-                : 'text-[#55635B] hover:text-[#1C211E]'
+                ? 'bg-white text-[#0F172A] shadow-xs border border-[#E2E8F0]'
+                : 'text-[#64748B] hover:text-[#0F172A] hover:bg-white/50'
             }`}
           >
-            <Layers className="w-4 h-4 text-[#45634D]" />
+            <Layers className={`w-4 h-4 ${mainTab === 'costs' && !isDemoModeActive ? 'text-[#059669]' : 'text-[#64748B]'}`} />
             <span>Cost & Ingredients</span>
           </button>
 
@@ -617,11 +617,11 @@ export default function App() {
             }}
             className={`flex-1 min-w-[120px] flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl text-xs font-bold transition cursor-pointer ${
               mainTab === 'orders' && !isDemoModeActive
-                ? 'bg-white text-[#1C211E] shadow-xs'
-                : 'text-[#55635B] hover:text-[#1C211E]'
+                ? 'bg-white text-[#0F172A] shadow-xs border border-[#E2E8F0]'
+                : 'text-[#64748B] hover:text-[#0F172A] hover:bg-white/50'
             }`}
           >
-            <Receipt className="w-4 h-4 text-[#45634D]" />
+            <Receipt className={`w-4 h-4 ${mainTab === 'orders' && !isDemoModeActive ? 'text-[#059669]' : 'text-[#64748B]'}`} />
             <span>Orders & Invoices</span>
           </button>
 
@@ -633,11 +633,11 @@ export default function App() {
             }}
             className={`flex-1 min-w-[110px] flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl text-xs font-bold transition cursor-pointer ${
               mainTab === 'daily-sales' && !isDemoModeActive
-                ? 'bg-white text-[#1C211E] shadow-xs'
-                : 'text-[#55635B] hover:text-[#1C211E]'
+                ? 'bg-white text-[#0F172A] shadow-xs border border-[#E2E8F0]'
+                : 'text-[#64748B] hover:text-[#0F172A] hover:bg-white/50'
             }`}
           >
-            <Calendar className="w-4 h-4 text-[#45634D]" />
+            <Calendar className={`w-4 h-4 ${mainTab === 'daily-sales' && !isDemoModeActive ? 'text-[#059669]' : 'text-[#64748B]'}`} />
             <span>Daily Sales</span>
           </button>
 
@@ -649,11 +649,11 @@ export default function App() {
             }}
             className={`flex-1 min-w-[100px] flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl text-xs font-bold transition cursor-pointer ${
               mainTab === 'inventory' && !isDemoModeActive
-                ? 'bg-white text-[#1C211E] shadow-xs'
-                : 'text-[#55635B] hover:text-[#1C211E]'
+                ? 'bg-white text-[#0F172A] shadow-xs border border-[#E2E8F0]'
+                : 'text-[#64748B] hover:text-[#0F172A] hover:bg-white/50'
             }`}
           >
-            <Package className="w-4 h-4 text-[#45634D]" />
+            <Package className={`w-4 h-4 ${mainTab === 'inventory' && !isDemoModeActive ? 'text-[#059669]' : 'text-[#64748B]'}`} />
             <span>Inventory</span>
           </button>
 
@@ -665,11 +665,11 @@ export default function App() {
             }}
             className={`flex-1 min-w-[110px] flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl text-xs font-bold transition cursor-pointer ${
               mainTab === 'expenses' && !isDemoModeActive
-                ? 'bg-white text-[#1C211E] shadow-xs'
-                : 'text-[#55635B] hover:text-[#1C211E]'
+                ? 'bg-white text-[#0F172A] shadow-xs border border-[#E2E8F0]'
+                : 'text-[#64748B] hover:text-[#0F172A] hover:bg-white/50'
             }`}
           >
-            <Wallet className="w-4 h-4 text-[#45634D]" />
+            <Wallet className={`w-4 h-4 ${mainTab === 'expenses' && !isDemoModeActive ? 'text-[#059669]' : 'text-[#64748B]'}`} />
             <span>Misc Expenses</span>
           </button>
 
@@ -681,11 +681,11 @@ export default function App() {
             }}
             className={`flex-1 min-w-[120px] flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl text-xs font-bold transition cursor-pointer ${
               mainTab === 'cumulative' && !isDemoModeActive
-                ? 'bg-white text-[#1C211E] shadow-xs'
-                : 'text-[#55635B] hover:text-[#1C211E]'
+                ? 'bg-white text-[#0F172A] shadow-xs border border-[#E2E8F0]'
+                : 'text-[#64748B] hover:text-[#0F172A] hover:bg-white/50'
             }`}
           >
-            <LineChart className="w-4 h-4 text-[#45634D]" />
+            <LineChart className={`w-4 h-4 ${mainTab === 'cumulative' && !isDemoModeActive ? 'text-[#059669]' : 'text-[#64748B]'}`} />
             <span>Cumulative Totals</span>
           </button>
 
@@ -694,12 +694,12 @@ export default function App() {
             onClick={() => setIsDemoModeActive((prev) => !prev)}
             className={`min-w-[110px] flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl text-xs font-bold transition cursor-pointer ${
               isDemoModeActive
-                ? 'bg-[#8C4E20] text-white shadow-xs'
-                : 'bg-[#FAF6F0] hover:bg-[#F2ECE1] text-[#8C4E20] border border-[#E6DAC8]'
+                ? 'bg-[#4F46E5] text-white shadow-xs'
+                : 'bg-white hover:bg-[#EEF2FF] text-[#4F46E5] border border-[#C7D2FE]'
             }`}
             title="Explore sample data without touching your real business records"
           >
-            <Sparkles className={`w-3.5 h-3.5 ${isDemoModeActive ? 'text-white' : 'text-[#9A5B2D]'}`} />
+            <Sparkles className={`w-3.5 h-3.5 ${isDemoModeActive ? 'text-white' : 'text-[#6366F1]'}`} />
             <span>{isDemoModeActive ? 'Exit Demo' : 'Demo Mode'}</span>
           </button>
         </nav>
@@ -741,18 +741,18 @@ export default function App() {
             {mainTab === 'costs' && (
           <div className="space-y-5 animate-fadeIn">
             {/* Sub-view toggle between Single Product and All Sizes Overview */}
-            <div className="flex items-center justify-between border-b border-[#E8E2D7] pb-3">
-              <div className="flex items-center gap-1.5 bg-[#EAE6DD] p-1 rounded-xl">
+            <div className="flex items-center justify-between border-b border-[#E2E8F0] pb-3">
+              <div className="flex items-center gap-1.5 bg-[#F1F5F9] p-1 rounded-xl border border-[#E2E8F0]">
                 <button
                   id="view-manage-tab-btn"
                   onClick={() => setCostSubTab('manage')}
                   className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
                     costSubTab === 'manage'
-                      ? 'bg-white text-[#1C241E] shadow-2xs'
-                      : 'text-[#5A695F] hover:text-[#1C241E]'
+                      ? 'bg-white text-[#0F172A] shadow-xs border border-[#E2E8F0]'
+                      : 'text-[#64748B] hover:text-[#0F172A]'
                   }`}
                 >
-                  <Layers className="w-3.5 h-3.5 text-[#45634D]" />
+                  <Layers className={`w-3.5 h-3.5 ${costSubTab === 'manage' ? 'text-[#059669]' : 'text-[#64748B]'}`} />
                   <span>Single Product View</span>
                 </button>
 
@@ -761,11 +761,11 @@ export default function App() {
                   onClick={() => setCostSubTab('overview')}
                   className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
                     costSubTab === 'overview'
-                      ? 'bg-white text-[#1C241E] shadow-2xs'
-                      : 'text-[#5A695F] hover:text-[#1C241E]'
+                      ? 'bg-white text-[#0F172A] shadow-xs border border-[#E2E8F0]'
+                      : 'text-[#64748B] hover:text-[#0F172A]'
                   }`}
                 >
-                  <BarChart3 className="w-3.5 h-3.5 text-[#5A695F]" />
+                  <BarChart3 className={`w-3.5 h-3.5 ${costSubTab === 'overview' ? 'text-[#059669]' : 'text-[#64748B]'}`} />
                   <span>All Sizes Comparison</span>
                 </button>
               </div>
@@ -774,16 +774,16 @@ export default function App() {
                 <button
                   id="toolbar-selling-prices-btn"
                   onClick={() => handleOpenSellingPrices()}
-                  className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white hover:bg-[#FAF8F5] text-[#243328] border border-[#DDD6CA] text-xs font-bold shadow-2xs transition cursor-pointer"
+                  className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white hover:bg-[#F8FAFC] text-[#0F172A] border border-[#CBD5E1] text-xs font-bold shadow-2xs transition cursor-pointer"
                   title="Configure and edit yoghurt selling prices per bottle"
                 >
-                  <Tag className="w-3.5 h-3.5 text-[#45634D]" />
+                  <Tag className="w-3.5 h-3.5 text-[#059669]" />
                   <span>Selling Prices</span>
                 </button>
                 <button
                   id="header-quick-add-btn"
                   onClick={() => handleOpenAddCost()}
-                  className="hidden sm:inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#45634D] hover:bg-[#3B5542] text-white text-xs font-bold shadow-2xs transition cursor-pointer"
+                  className="hidden sm:inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#059669] hover:bg-[#047857] text-white text-xs font-bold shadow-xs transition cursor-pointer"
                 >
                   <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
                   <span>New Cost Item</span>
@@ -995,7 +995,7 @@ export default function App() {
           <button
             id="mobile-fab-add-cost-item"
             onClick={() => handleOpenAddCost()}
-            className="w-14 h-14 rounded-full bg-[#45634D] hover:bg-[#3B5542] active:bg-[#324938] text-white flex items-center justify-center shadow-lg transition-transform active:scale-95 cursor-pointer ring-4 ring-[#F9F7F2]"
+            className="w-14 h-14 rounded-full bg-[#059669] hover:bg-[#047857] active:bg-[#065F46] text-white flex items-center justify-center shadow-lg transition-transform active:scale-95 cursor-pointer ring-4 ring-[#F8FAFC]"
             title="Add Cost Item"
           >
             <Plus className="w-6 h-6 stroke-[3]" />
